@@ -46,8 +46,8 @@ Replicates TODO app architecture from ~/workspace/projects/TODO.
 
 ## Phase 7: Invoice PDF Generation
 
-- [ ] **Task 7.1** - PDF generation backend (M)
-- [ ] **Task 7.2** - PDF download endpoint + frontend button (S)
+- [x] **Task 7.1** - PDF generation backend (M)
+- [x] **Task 7.2** - PDF download endpoint + frontend button (S)
 
 ## Phase 8: Email Sending
 
