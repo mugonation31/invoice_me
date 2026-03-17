@@ -28,8 +28,8 @@ Replicates TODO app architecture from ~/workspace/projects/TODO.
 
 ## Phase 4: Company/Payment Settings
 
-- [ ] **Task 4.1** - Settings backend (S)
-- [ ] **Task 4.2** - Settings frontend page (M)
+- [x] **Task 4.1** - Settings backend (S)
+- [x] **Task 4.2** - Settings frontend page (M)
 
 ## Phase 5: Invoice CRUD — Backend
 
