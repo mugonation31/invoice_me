@@ -22,6 +22,7 @@ export class InvoiceDetailComponent implements OnInit {
   invoice: Invoice | null = null;
   settings: CompanySettings | null = null;
   loading = false;
+  downloadingPdf = false;
   error: string | null = null;
 
   ngOnInit() {
@@ -97,6 +98,28 @@ export class InvoiceDetailComponent implements OnInit {
         }
       });
     }
+  }
+
+  downloadPdf() {
+    if (!this.invoice?.id || !this.invoice?.invoice_number) return;
+
+    this.downloadingPdf = true;
+    this.invoiceService.downloadPdf(this.invoice.id, this.invoice.invoice_number).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${this.invoice!.invoice_number}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.downloadingPdf = false;
+      },
+      error: (err) => {
+        this.error = 'Failed to download PDF.';
+        console.error('Error downloading PDF:', err);
+        this.downloadingPdf = false;
+      }
+    });
   }
 
   goBack() {

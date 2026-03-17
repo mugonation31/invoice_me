@@ -14,6 +14,7 @@ describe('InvoiceDetailComponent', () => {
     getInvoice: jasmine.Spy;
     updateStatus: jasmine.Spy;
     deleteInvoice: jasmine.Spy;
+    downloadPdf: jasmine.Spy;
   };
   let mockSettingsService: {
     getSettings: jasmine.Spy;
@@ -61,6 +62,7 @@ describe('InvoiceDetailComponent', () => {
       getInvoice: jasmine.createSpy('getInvoice').and.returnValue(of(mockInvoice)),
       updateStatus: jasmine.createSpy('updateStatus').and.returnValue(of({ ...mockInvoice, status: 'paid' })),
       deleteInvoice: jasmine.createSpy('deleteInvoice').and.returnValue(of({ message: 'deleted' })),
+      downloadPdf: jasmine.createSpy('downloadPdf').and.returnValue(of(new Blob(['%PDF-fake'], { type: 'application/pdf' }))),
     };
 
     mockSettingsService = {
@@ -134,5 +136,20 @@ describe('InvoiceDetailComponent', () => {
     expect(editBtn).toBeTruthy();
     expect(paidBtn).toBeTruthy();
     expect(deleteBtn).toBeTruthy();
+  });
+
+  // Test 6: should call downloadPdf when download button is clicked
+  it('should call downloadPdf when download button is clicked', () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const downloadBtn = compiled.querySelector('.btn-download') as HTMLButtonElement;
+    expect(downloadBtn).toBeTruthy();
+    expect(downloadBtn.disabled).toBeFalse();
+
+    downloadBtn.click();
+    fixture.detectChanges();
+
+    expect(mockInvoiceService.downloadPdf).toHaveBeenCalledWith('inv-123', 'INV-001');
   });
 });

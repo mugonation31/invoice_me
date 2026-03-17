@@ -161,4 +161,23 @@ describe('InvoiceService', () => {
       req.flush({ ...mockInvoice, status: 'paid' });
     });
   });
+
+  // Test 8: should call GET /api/invoices/{id}/pdf as blob on downloadPdf()
+  it('should call GET /api/invoices/{id}/pdf as blob on downloadPdf()', (done: DoneFn) => {
+    const mockBlob = new Blob(['%PDF-fake'], { type: 'application/pdf' });
+
+    service.downloadPdf('inv-123', 'INV-001').subscribe((blob: Blob) => {
+      expect(blob).toBeTruthy();
+      expect(blob.type).toBe('application/pdf');
+      done();
+    });
+
+    setTimeout(() => {
+      const req = httpMock.expectOne(r => r.url.includes('/api/invoices/inv-123/pdf'));
+      expect(req.request.method).toBe('GET');
+      expect(req.request.responseType).toBe('blob');
+      expect(req.request.headers.get('Authorization')).toBe('Bearer fake-token');
+      req.flush(mockBlob);
+    });
+  });
 });

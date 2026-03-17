@@ -69,4 +69,17 @@ export class InvoiceService {
       )
     );
   }
+
+  downloadPdf(id: string, invoiceNumber: string): Observable<Blob> {
+    return from(this.getAuthHeaders()).pipe(
+      switchMap(headers => {
+        // Remove Content-Type for blob requests
+        const blobHeaders = headers.delete('Content-Type');
+        return this.http.get(`${this.apiUrl}/invoices/${id}/pdf`, {
+          headers: blobHeaders,
+          responseType: 'blob'
+        });
+      })
+    );
+  }
 }

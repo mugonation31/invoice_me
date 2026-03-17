@@ -3,8 +3,10 @@ FastAPI backend for Invoice Me app with Supabase authentication
 """
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from typing import List
 from contextlib import asynccontextmanager
+from io import BytesIO
 
 # Local imports
 from config import settings
@@ -205,6 +207,37 @@ async def delete_invoice(
             detail="Invoice not found"
         )
     return {"message": "Invoice deleted successfully"}
+
+
+@app.get("/api/invoices/{invoice_id}/pdf")
+async def get_invoice_pdf(
+    invoice_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Download invoice as PDF"""
+    from pdf_generator import generate_invoice_pdf
+
+    invoice = await db.get_invoice_by_id(invoice_id, user_id)
+    if not invoice:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invoice not found"
+        )
+
+    company_settings = await db.get_company_settings(user_id)
+    if not company_settings:
+        company_settings = {}
+
+    pdf_bytes = generate_invoice_pdf(invoice, company_settings)
+    invoice_number = invoice.get("invoice_number", "invoice")
+
+    return StreamingResponse(
+        BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{invoice_number}.pdf"'
+        }
+    )
 
 
 # ============================================================
