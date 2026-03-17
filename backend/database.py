@@ -27,32 +27,80 @@ async def close_pool():
 
 
 # ============================================================
-# Client CRUD operations (placeholder)
+# Client CRUD operations
 # ============================================================
 
 async def get_clients(user_id: str) -> List[Dict[str, Any]]:
-    """Get all clients for a user"""
-    pass
+    """Get all clients for a user, ordered by name"""
+    db = await get_pool()
+    rows = await db.fetch(
+        "SELECT * FROM clients WHERE user_id = $1 ORDER BY name ASC",
+        user_id
+    )
+    return [dict(row) for row in rows]
 
 
 async def get_client_by_id(client_id: str, user_id: str) -> Optional[Dict[str, Any]]:
     """Get a single client by ID"""
-    pass
+    db = await get_pool()
+    row = await db.fetchrow(
+        "SELECT * FROM clients WHERE id = $1 AND user_id = $2",
+        client_id, user_id
+    )
+    return dict(row) if row else None
 
 
 async def create_client(user_id: str, client) -> Dict[str, Any]:
     """Create a new client"""
-    pass
+    db = await get_pool()
+    row = await db.fetchrow(
+        """INSERT INTO clients (user_id, name, email, phone, address)
+           VALUES ($1, $2, $3, $4, $5)
+           RETURNING *""",
+        user_id, client.name, client.email, client.phone, client.address
+    )
+    return dict(row)
 
 
 async def update_client(client_id: str, user_id: str, updates) -> Optional[Dict[str, Any]]:
-    """Update a client"""
-    pass
+    """Update a client with dynamic fields"""
+    # Build SET clause from non-None fields
+    update_data = updates.model_dump(exclude_unset=True)
+    if not update_data:
+        return await get_client_by_id(client_id, user_id)
+
+    set_clauses = []
+    values = []
+    for i, (key, value) in enumerate(update_data.items(), start=1):
+        set_clauses.append(f"{key} = ${i}")
+        values.append(value)
+
+    # Add updated_at
+    set_clauses.append(f"updated_at = NOW()")
+
+    # Add client_id and user_id as the last parameters
+    param_offset = len(values) + 1
+    values.append(client_id)
+    values.append(user_id)
+
+    query = f"""UPDATE clients
+                SET {', '.join(set_clauses)}
+                WHERE id = ${param_offset} AND user_id = ${param_offset + 1}
+                RETURNING *"""
+
+    db = await get_pool()
+    row = await db.fetchrow(query, *values)
+    return dict(row) if row else None
 
 
 async def delete_client(client_id: str, user_id: str) -> bool:
-    """Delete a client"""
-    pass
+    """Delete a client (hard delete)"""
+    db = await get_pool()
+    result = await db.execute(
+        "DELETE FROM clients WHERE id = $1 AND user_id = $2",
+        client_id, user_id
+    )
+    return result == "DELETE 1"
 
 
 # ============================================================

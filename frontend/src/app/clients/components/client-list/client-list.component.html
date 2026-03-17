@@ -1,0 +1,52 @@
+<div class="client-list-container">
+  <div class="header">
+    <h1>My Clients</h1>
+    <div class="header-actions">
+      <button class="btn-new-client" (click)="toggleForm()">
+        {{ showForm ? 'Cancel' : '+ New Client' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Client Form -->
+  <app-client-form
+    *ngIf="showForm"
+    [client]="editingClient"
+    (formSubmit)="onFormSubmit($event)"
+    (formCancel)="onFormCancel()"
+  ></app-client-form>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    Loading clients...
+  </div>
+
+  <!-- Client Cards -->
+  <div *ngIf="!loading && clients.length > 0" class="clients">
+    <div
+      *ngFor="let client of clients; trackBy: trackByClientId"
+      class="client-card"
+    >
+      <div class="client-info">
+        <h3 class="client-name">{{ client.name }}</h3>
+        <p class="client-email" *ngIf="client.email">{{ client.email }}</p>
+        <p class="client-phone" *ngIf="client.phone">{{ client.phone }}</p>
+        <p class="client-address" *ngIf="client.address">{{ client.address }}</p>
+      </div>
+      <div class="client-actions">
+        <button class="btn-edit" (click)="editClient(client)">Edit</button>
+        <button class="btn-delete" (click)="deleteClient(client)">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && clients.length === 0" class="empty-state">
+    <p>No clients found. Add one to get started!</p>
+  </div>
+</div>

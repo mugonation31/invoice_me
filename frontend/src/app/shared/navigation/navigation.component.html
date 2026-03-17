@@ -1,0 +1,28 @@
+<!-- Only show navigation if user is logged in -->
+<nav *ngIf="currentUser" class="navbar">
+  <div class="nav-container">
+    <!-- Left side: App branding -->
+    <div class="nav-brand">
+      <h2>Invoice Me</h2>
+    </div>
+
+    <!-- Center: Navigation links -->
+    <div class="nav-links">
+      <a routerLink="/dashboard">Dashboard</a>
+      <a routerLink="/clients">Clients</a>
+      <a routerLink="/invoices">Invoices</a>
+      <a routerLink="/settings">Settings</a>
+    </div>
+
+    <!-- Right side: User info and logout -->
+    <div class="nav-user">
+      <!-- User greeting -->
+      <span class="user-name">Hi, {{ userName }}!</span>
+
+      <!-- Logout button -->
+      <button (click)="logout()" class="logout-btn">
+        Logout
+      </button>
+    </div>
+  </div>
+</nav>

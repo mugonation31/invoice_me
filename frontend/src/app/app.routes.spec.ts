@@ -1,4 +1,5 @@
 import { routes } from './app.routes';
+import { authGuard } from './auth/guards/auth.guard';
 
 describe('App Routes', () => {
   it('should have routes configured', () => {
@@ -49,5 +50,36 @@ describe('App Routes', () => {
   it('should have a settings route', () => {
     const route = routes.find(r => r.path === 'settings');
     expect(route).toBeTruthy();
+  });
+
+  // AuthGuard tests for protected routes
+  it('should have authGuard on dashboard route', () => {
+    const route = routes.find(r => r.path === 'dashboard');
+    expect(route?.canActivate).toContain(authGuard);
+  });
+
+  it('should have authGuard on clients route', () => {
+    const route = routes.find(r => r.path === 'clients');
+    expect(route?.canActivate).toContain(authGuard);
+  });
+
+  it('should have authGuard on invoices route', () => {
+    const route = routes.find(r => r.path === 'invoices');
+    expect(route?.canActivate).toContain(authGuard);
+  });
+
+  it('should have authGuard on settings route', () => {
+    const route = routes.find(r => r.path === 'settings');
+    expect(route?.canActivate).toContain(authGuard);
+  });
+
+  it('should NOT have authGuard on login route', () => {
+    const route = routes.find(r => r.path === 'login');
+    expect(route?.canActivate).toBeFalsy();
+  });
+
+  it('should NOT have authGuard on signup route', () => {
+    const route = routes.find(r => r.path === 'signup');
+    expect(route?.canActivate).toBeFalsy();
   });
 });
