@@ -23,7 +23,9 @@ export class InvoiceDetailComponent implements OnInit {
   settings: CompanySettings | null = null;
   loading = false;
   downloadingPdf = false;
+  sendingEmail = false;
   error: string | null = null;
+  successMessage: string | null = null;
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
@@ -98,6 +100,28 @@ export class InvoiceDetailComponent implements OnInit {
         }
       });
     }
+  }
+
+  sendInvoice() {
+    if (!this.invoice?.id) return;
+
+    this.sendingEmail = true;
+    this.error = null;
+    this.successMessage = null;
+    this.invoiceService.sendInvoice(this.invoice.id).subscribe({
+      next: (result) => {
+        if (this.invoice) {
+          this.invoice = { ...this.invoice, status: 'sent' };
+        }
+        this.successMessage = result.message;
+        this.sendingEmail = false;
+      },
+      error: (err) => {
+        this.error = 'Failed to send invoice.';
+        console.error('Error sending invoice:', err);
+        this.sendingEmail = false;
+      }
+    });
   }
 
   downloadPdf() {

@@ -70,6 +70,14 @@ export class InvoiceService {
     );
   }
 
+  sendInvoice(id: string): Observable<{ message: string; status: string }> {
+    return from(this.getAuthHeaders()).pipe(
+      switchMap(headers =>
+        this.http.post<{ message: string; status: string }>(`${this.apiUrl}/invoices/${id}/send`, {}, { headers })
+      )
+    );
+  }
+
   downloadPdf(id: string, invoiceNumber: string): Observable<Blob> {
     return from(this.getAuthHeaders()).pipe(
       switchMap(headers => {

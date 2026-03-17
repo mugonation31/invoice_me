@@ -209,6 +209,42 @@ async def delete_invoice(
     return {"message": "Invoice deleted successfully"}
 
 
+@app.post("/api/invoices/{invoice_id}/send")
+async def send_invoice(
+    invoice_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Send invoice via email"""
+    from pdf_generator import generate_invoice_pdf
+    from email_service import send_invoice_email
+
+    invoice = await db.get_invoice_by_id(invoice_id, user_id)
+    if not invoice:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invoice not found"
+        )
+
+    company_settings = await db.get_company_settings(user_id)
+    if not company_settings:
+        company_settings = {}
+
+    pdf_bytes = generate_invoice_pdf(invoice, company_settings)
+
+    await send_invoice_email(
+        to_email=invoice.get("client_email", ""),
+        client_name=invoice.get("client_name", ""),
+        invoice_number=invoice.get("invoice_number", ""),
+        total_due=invoice.get("total_due", 0),
+        pdf_bytes=pdf_bytes,
+        company_name=company_settings.get("company_name"),
+    )
+
+    await db.update_invoice_status(invoice_id, user_id, "sent")
+
+    return {"message": "Invoice sent successfully", "status": "sent"}
+
+
 @app.get("/api/invoices/{invoice_id}/pdf")
 async def get_invoice_pdf(
     invoice_id: str,

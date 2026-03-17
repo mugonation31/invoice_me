@@ -180,4 +180,20 @@ describe('InvoiceService', () => {
       req.flush(mockBlob);
     });
   });
+
+  // Test 9: should call POST /api/invoices/{id}/send on sendInvoice()
+  it('should call POST /api/invoices/{id}/send on sendInvoice()', (done: DoneFn) => {
+    service.sendInvoice('inv-123').subscribe((result: any) => {
+      expect(result.message).toBe('Invoice sent successfully');
+      expect(result.status).toBe('sent');
+      done();
+    });
+
+    setTimeout(() => {
+      const req = httpMock.expectOne(r => r.url.includes('/api/invoices/inv-123/send'));
+      expect(req.request.method).toBe('POST');
+      expect(req.request.headers.get('Authorization')).toBe('Bearer fake-token');
+      req.flush({ message: 'Invoice sent successfully', status: 'sent' });
+    });
+  });
 });

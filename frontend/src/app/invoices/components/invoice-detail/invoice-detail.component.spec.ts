@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { InvoiceDetailComponent } from './invoice-detail.component';
 import { InvoiceService } from '../../services/invoice.service';
 import { SettingsService } from '../../../settings/services/settings.service';
@@ -15,6 +15,7 @@ describe('InvoiceDetailComponent', () => {
     updateStatus: jasmine.Spy;
     deleteInvoice: jasmine.Spy;
     downloadPdf: jasmine.Spy;
+    sendInvoice: jasmine.Spy;
   };
   let mockSettingsService: {
     getSettings: jasmine.Spy;
@@ -63,6 +64,7 @@ describe('InvoiceDetailComponent', () => {
       updateStatus: jasmine.createSpy('updateStatus').and.returnValue(of({ ...mockInvoice, status: 'paid' })),
       deleteInvoice: jasmine.createSpy('deleteInvoice').and.returnValue(of({ message: 'deleted' })),
       downloadPdf: jasmine.createSpy('downloadPdf').and.returnValue(of(new Blob(['%PDF-fake'], { type: 'application/pdf' }))),
+      sendInvoice: jasmine.createSpy('sendInvoice').and.returnValue(of({ message: 'Invoice sent successfully', status: 'sent' })),
     };
 
     mockSettingsService = {
@@ -151,5 +153,43 @@ describe('InvoiceDetailComponent', () => {
     fixture.detectChanges();
 
     expect(mockInvoiceService.downloadPdf).toHaveBeenCalledWith('inv-123', 'INV-001');
+  });
+
+  // Test 7: should call sendInvoice when send button is clicked
+  it('should call sendInvoice when send button is clicked', () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const sendBtn = compiled.querySelector('.btn-send') as HTMLButtonElement;
+    expect(sendBtn).toBeTruthy();
+    expect(sendBtn.disabled).toBeFalse();
+
+    sendBtn.click();
+    fixture.detectChanges();
+
+    expect(mockInvoiceService.sendInvoice).toHaveBeenCalledWith('inv-123');
+  });
+
+  // Test 8: should show sending state while email is being sent
+  it('should show sending state while email is being sent', () => {
+    const sendSubject = new Subject<{ message: string; status: string }>();
+    mockInvoiceService.sendInvoice.and.returnValue(sendSubject.asObservable());
+
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const sendBtn = compiled.querySelector('.btn-send') as HTMLButtonElement;
+    sendBtn.click();
+    fixture.detectChanges();
+
+    expect(component.sendingEmail).toBeTrue();
+    expect(sendBtn.textContent).toContain('Sending...');
+
+    // Complete the send
+    sendSubject.next({ message: 'Invoice sent successfully', status: 'sent' });
+    sendSubject.complete();
+    fixture.detectChanges();
+
+    expect(component.sendingEmail).toBeFalse();
   });
 });

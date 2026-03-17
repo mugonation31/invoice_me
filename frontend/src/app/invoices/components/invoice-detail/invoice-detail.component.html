@@ -9,6 +9,11 @@
     {{ error }}
   </div>
 
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="success-message">
+    {{ successMessage }}
+  </div>
+
   <!-- Invoice Content -->
   <div *ngIf="invoice && !loading" class="invoice-wrapper">
     <!-- Back Link -->
@@ -23,7 +28,9 @@
       </div>
       <div class="action-buttons">
         <button class="btn btn-edit" (click)="navigateToEdit()">Edit</button>
-        <button class="btn btn-send" disabled>Send</button>
+        <button class="btn btn-send" (click)="sendInvoice()" [disabled]="sendingEmail || !invoice.client_email">
+          {{ sendingEmail ? 'Sending...' : 'Send' }}
+        </button>
         <button class="btn btn-download" (click)="downloadPdf()" [disabled]="downloadingPdf">
           {{ downloadingPdf ? 'Generating...' : 'Download PDF' }}
         </button>
