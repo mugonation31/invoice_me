@@ -39,10 +39,10 @@ Replicates TODO app architecture from ~/workspace/projects/TODO.
 
 ## Phase 6: Invoice CRUD — Frontend
 
-- [ ] **Task 6.1** - Invoice frontend models + service (S)
-- [ ] **Task 6.2** - Invoice list page (M)
-- [ ] **Task 6.3** - Invoice form page (L)
-- [ ] **Task 6.4** - Invoice detail/view page (S)
+- [x] **Task 6.1** - Invoice frontend models + service (S)
+- [x] **Task 6.2** - Invoice list page (M)
+- [x] **Task 6.3** - Invoice form page (L)
+- [x] **Task 6.4** - Invoice detail/view page (S)
 
 ## Phase 7: Invoice PDF Generation
 
