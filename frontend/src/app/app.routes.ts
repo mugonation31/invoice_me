@@ -17,6 +17,7 @@ export const routes: Routes = [
     { path: 'invoices', component: InvoiceListComponent, canActivate: [authGuard] },
     { path: 'invoices/new', component: InvoiceFormComponent, canActivate: [authGuard] },
     { path: 'invoices/:id', component: InvoiceDetailComponent, canActivate: [authGuard] },
+    { path: 'invoices/:id/edit', component: InvoiceFormComponent, canActivate: [authGuard] },
     { path: 'settings', component: SettingsPageComponent, canActivate: [authGuard] },
     { path: '', redirectTo: '/login', pathMatch: 'full' }
 ];

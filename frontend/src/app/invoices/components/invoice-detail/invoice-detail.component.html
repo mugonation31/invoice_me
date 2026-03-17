@@ -1,0 +1,110 @@
+<div class="invoice-detail-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    Loading invoice...
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <!-- Invoice Content -->
+  <div *ngIf="invoice && !loading" class="invoice-wrapper">
+    <!-- Back Link -->
+    <a class="back-link" (click)="goBack()">Back to Invoices</a>
+
+    <!-- Action Buttons -->
+    <div class="action-bar">
+      <div class="invoice-status">
+        <span class="status-badge status-{{ invoice.status }}">
+          {{ invoice.status }}
+        </span>
+      </div>
+      <div class="action-buttons">
+        <button class="btn btn-edit" (click)="navigateToEdit()">Edit</button>
+        <button class="btn btn-send" disabled>Send</button>
+        <button class="btn btn-download" disabled>Download PDF</button>
+        <button class="btn btn-mark-paid" (click)="markAsPaid()" [disabled]="invoice.status === 'paid'">
+          Mark as Paid
+        </button>
+        <button class="btn btn-delete" (click)="deleteInvoice()">Delete</button>
+      </div>
+    </div>
+
+    <!-- Invoice Preview -->
+    <div class="invoice-preview">
+      <!-- Header -->
+      <div class="invoice-header">
+        <div class="company-info" *ngIf="settings">
+          <h2 class="company-name">{{ settings.company_name }}</h2>
+          <p *ngIf="settings.company_email">{{ settings.company_email }}</p>
+          <p *ngIf="settings.company_phone">{{ settings.company_phone }}</p>
+        </div>
+        <div class="invoice-meta">
+          <h1 class="invoice-number">{{ invoice.invoice_number }}</h1>
+        </div>
+      </div>
+
+      <!-- Client & Dates -->
+      <div class="invoice-info-row">
+        <div class="client-details">
+          <h3>Bill To</h3>
+          <p class="client-name">{{ invoice.client_name }}</p>
+          <p class="client-email" *ngIf="invoice.client_email">{{ invoice.client_email }}</p>
+        </div>
+        <div class="date-details">
+          <div class="date-row">
+            <span class="date-label">Issue Date:</span>
+            <span>{{ invoice.issue_date }}</span>
+          </div>
+          <div class="date-row">
+            <span class="date-label">Due Date:</span>
+            <span>{{ invoice.due_date }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Line Items Table -->
+      <div class="line-items-table">
+        <div class="table-header">
+          <span class="col-description">Description</span>
+          <span class="col-quantity">Quantity</span>
+          <span class="col-rate">Rate</span>
+          <span class="col-amount">Amount</span>
+        </div>
+        <div
+          *ngFor="let item of invoice.line_items"
+          class="line-item-row"
+        >
+          <span class="col-description">{{ item.description }}</span>
+          <span class="col-quantity">{{ item.quantity }}</span>
+          <span class="col-rate">{{ formatCurrency(item.rate) }}</span>
+          <span class="col-amount">{{ formatCurrency(item.amount) }}</span>
+        </div>
+      </div>
+
+      <!-- Totals -->
+      <div class="totals-section">
+        <div class="total-row">
+          <span class="total-label">Subtotal</span>
+          <span class="total-value">{{ formatCurrency(invoice.subtotal) }}</span>
+        </div>
+        <div class="total-row">
+          <span class="total-label">Tax ({{ invoice.tax_rate }}%)</span>
+          <span class="total-value">{{ formatCurrency(invoice.tax_amount) }}</span>
+        </div>
+        <div class="total-row total-due">
+          <span class="total-label">Total Due</span>
+          <span class="total-value">{{ formatCurrency(invoice.total_due) }}</span>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div *ngIf="invoice.notes" class="notes-section">
+        <h3>Notes</h3>
+        <p>{{ invoice.notes }}</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,53 @@
+<div class="invoice-list-container">
+  <div class="header">
+    <h1>My Invoices</h1>
+    <div class="header-actions">
+      <button class="btn-new-invoice" (click)="navigateToNew()">
+        + New Invoice
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    Loading invoices...
+  </div>
+
+  <!-- Invoice Cards -->
+  <div *ngIf="!loading && invoices.length > 0" class="invoices">
+    <div
+      *ngFor="let invoice of invoices; trackBy: trackByInvoiceId"
+      class="invoice-card"
+      (click)="navigateToDetail(invoice)"
+    >
+      <div class="invoice-info">
+        <div class="invoice-header-row">
+          <h3 class="invoice-number">{{ invoice.invoice_number }}</h3>
+          <span class="status-badge status-{{ invoice.status }}">
+            {{ invoice.status }}
+          </span>
+        </div>
+        <p class="client-name">{{ invoice.client_name }}</p>
+        <div class="invoice-dates">
+          <span class="date-label">Issued:</span> {{ invoice.issue_date }}
+          <span class="date-separator">|</span>
+          <span class="date-label">Due:</span> {{ invoice.due_date }}
+        </div>
+      </div>
+      <div class="invoice-total">
+        <span class="total-label">Total Due</span>
+        <span class="total-amount">{{ formatCurrency(invoice.total_due) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && invoices.length === 0" class="empty-state">
+    <p>No invoices found. Create one to get started!</p>
+  </div>
+</div>
