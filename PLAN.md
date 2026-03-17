@@ -56,9 +56,9 @@ Replicates TODO app architecture from ~/workspace/projects/TODO.
 
 ## Phase 9: Scheduling
 
-- [ ] **Task 9.1** - Schedule database + models (S)
-- [ ] **Task 9.2** - Scheduler backend with APScheduler (M)
-- [ ] **Task 9.3** - Schedule API + frontend UI (M)
+- [x] **Task 9.1** - Schedule database + models (S)
+- [x] **Task 9.2** - Scheduler backend with APScheduler (M)
+- [x] **Task 9.3** - Schedule API + frontend UI (M)
 
 ## Phase 10: Dashboard + Polish
 
