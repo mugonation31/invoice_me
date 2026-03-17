@@ -7,6 +7,8 @@ import { InvoiceListComponent } from './invoices/components/invoice-list/invoice
 import { InvoiceFormComponent } from './invoices/components/invoice-form/invoice-form.component';
 import { InvoiceDetailComponent } from './invoices/components/invoice-detail/invoice-detail.component';
 import { SettingsPageComponent } from './settings/components/settings-page/settings-page.component';
+import { ScheduleListComponent } from './schedules/components/schedule-list/schedule-list.component';
+import { ScheduleFormComponent } from './schedules/components/schedule-form/schedule-form.component';
 import { authGuard } from './auth/guards/auth.guard';
 
 export const routes: Routes = [
@@ -18,6 +20,8 @@ export const routes: Routes = [
     { path: 'invoices/new', component: InvoiceFormComponent, canActivate: [authGuard] },
     { path: 'invoices/:id', component: InvoiceDetailComponent, canActivate: [authGuard] },
     { path: 'invoices/:id/edit', component: InvoiceFormComponent, canActivate: [authGuard] },
+    { path: 'schedules', component: ScheduleListComponent, canActivate: [authGuard] },
+    { path: 'schedules/new', component: ScheduleFormComponent, canActivate: [authGuard] },
     { path: 'settings', component: SettingsPageComponent, canActivate: [authGuard] },
     { path: '', redirectTo: '/login', pathMatch: 'full' }
 ];

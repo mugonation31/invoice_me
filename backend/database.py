@@ -405,20 +405,160 @@ async def get_dashboard_stats(user_id: str) -> Dict[str, Any]:
 # ============================================================
 
 async def get_schedules(user_id: str) -> List[Dict[str, Any]]:
-    """Get all recurring invoice schedules for a user"""
-    pass
+    """Get all schedules for a user with client name joined, ordered by next_run_date"""
+    db = await get_pool()
+    rows = await db.fetch(
+        """SELECT s.*, c.name as client_name
+           FROM invoice_schedules s
+           LEFT JOIN clients c ON s.client_id = c.id
+           WHERE s.user_id = $1
+           ORDER BY s.next_run_date ASC""",
+        user_id
+    )
+    return [dict(row) for row in rows]
+
+
+async def get_schedule_by_id(schedule_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+    """Get a single schedule by ID with client name"""
+    db = await get_pool()
+    row = await db.fetchrow(
+        """SELECT s.*, c.name as client_name
+           FROM invoice_schedules s
+           LEFT JOIN clients c ON s.client_id = c.id
+           WHERE s.id = $1 AND s.user_id = $2""",
+        schedule_id, user_id
+    )
+    return dict(row) if row else None
 
 
 async def create_schedule(user_id: str, schedule) -> Dict[str, Any]:
     """Create a new recurring invoice schedule"""
-    pass
+    import json
+    db = await get_pool()
+
+    # Serialize line items to JSON
+    line_items_json = json.dumps([
+        {"description": item.description, "quantity": item.quantity, "rate": item.rate}
+        for item in schedule.line_items
+    ])
+
+    row = await db.fetchrow(
+        """INSERT INTO invoice_schedules (
+               user_id, client_id, description, line_items, tax_rate,
+               recurrence, next_run_date, auto_send
+           ) VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8)
+           RETURNING *""",
+        user_id, schedule.client_id, schedule.description,
+        line_items_json, schedule.tax_rate,
+        schedule.recurrence.value, schedule.next_run_date, schedule.auto_send
+    )
+    schedule_dict = dict(row)
+
+    # Fetch client name
+    client_row = await db.fetchrow(
+        "SELECT name FROM clients WHERE id = $1",
+        schedule.client_id
+    )
+    schedule_dict["client_name"] = client_row["name"] if client_row else None
+    return schedule_dict
 
 
 async def update_schedule(schedule_id: str, user_id: str, updates) -> Optional[Dict[str, Any]]:
-    """Update a schedule"""
-    pass
+    """Update a schedule with dynamic fields"""
+    import json
+    update_data = updates.model_dump(exclude_unset=True)
+    if not update_data:
+        return await get_schedule_by_id(schedule_id, user_id)
+
+    # Handle line_items serialization
+    if "line_items" in update_data and update_data["line_items"] is not None:
+        update_data["line_items"] = json.dumps([
+            {"description": item["description"], "quantity": item["quantity"], "rate": item["rate"]}
+            for item in update_data["line_items"]
+        ])
+
+    # Convert recurrence enum to string
+    if "recurrence" in update_data and update_data["recurrence"] is not None:
+        update_data["recurrence"] = (
+            update_data["recurrence"].value
+            if hasattr(update_data["recurrence"], "value")
+            else update_data["recurrence"]
+        )
+
+    set_clauses = []
+    values = []
+    for i, (key, value) in enumerate(update_data.items(), start=1):
+        if key == "line_items":
+            set_clauses.append(f"{key} = ${i}::jsonb")
+        else:
+            set_clauses.append(f"{key} = ${i}")
+        values.append(value)
+
+    set_clauses.append("updated_at = NOW()")
+
+    param_offset = len(values) + 1
+    values.append(schedule_id)
+    values.append(user_id)
+
+    query = f"""UPDATE invoice_schedules
+                SET {', '.join(set_clauses)}
+                WHERE id = ${param_offset} AND user_id = ${param_offset + 1}
+                RETURNING *"""
+
+    db = await get_pool()
+    row = await db.fetchrow(query, *values)
+    if not row:
+        return None
+
+    return await get_schedule_by_id(schedule_id, user_id)
 
 
 async def delete_schedule(schedule_id: str, user_id: str) -> bool:
     """Delete a schedule"""
-    pass
+    db = await get_pool()
+    result = await db.execute(
+        "DELETE FROM invoice_schedules WHERE id = $1 AND user_id = $2",
+        schedule_id, user_id
+    )
+    return result == "DELETE 1"
+
+
+async def get_due_schedules() -> List[Dict[str, Any]]:
+    """Get all active schedules where next_run_date <= today"""
+    db = await get_pool()
+    rows = await db.fetch(
+        """SELECT s.*, c.name as client_name
+           FROM invoice_schedules s
+           LEFT JOIN clients c ON s.client_id = c.id
+           WHERE s.active = true AND s.next_run_date <= CURRENT_DATE
+           ORDER BY s.next_run_date ASC"""
+    )
+    return [dict(row) for row in rows]
+
+
+async def advance_schedule_date(schedule_id: str, recurrence: str) -> None:
+    """Calculate and update next_run_date based on recurrence, or deactivate if once"""
+    db = await get_pool()
+
+    if recurrence == "once":
+        await db.execute(
+            """UPDATE invoice_schedules
+               SET active = false, updated_at = NOW()
+               WHERE id = $1""",
+            schedule_id
+        )
+    else:
+        interval_map = {
+            "weekly": "7 days",
+            "monthly": "1 month",
+            "quarterly": "3 months",
+            "yearly": "1 year",
+        }
+        interval = interval_map.get(recurrence, "1 month")
+        await db.execute(
+            f"""UPDATE invoice_schedules
+                SET next_run_date = next_run_date + INTERVAL '{interval}',
+                    updated_at = NOW()
+                WHERE id = $1""",
+            schedule_id
+        )

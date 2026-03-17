@@ -118,12 +118,36 @@ class InvoiceResponse(BaseModel):
         from_attributes = True
 
 
+class Recurrence(str, Enum):
+    """Recurrence frequency for invoice schedules"""
+    ONCE = "once"
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    QUARTERLY = "quarterly"
+    YEARLY = "yearly"
+
+
 class ScheduleCreate(BaseModel):
     """Schema for creating a recurring invoice schedule"""
     client_id: str = Field(..., description="Client ID")
-    frequency: str = Field(..., description="Frequency: weekly, monthly, quarterly, yearly")
-    next_run: datetime = Field(..., description="Next scheduled run date")
+    description: Optional[str] = Field(None, max_length=500, description="Schedule description")
     line_items: List[LineItemCreate] = Field(default_factory=list, description="Line items template")
+    tax_rate: float = Field(0, ge=0, description="Tax rate percentage")
+    recurrence: Recurrence = Field(..., description="Recurrence: once, weekly, monthly, quarterly, yearly")
+    next_run_date: date = Field(..., description="Next scheduled run date")
+    auto_send: bool = Field(False, description="Auto-send invoice when generated")
+
+
+class ScheduleUpdate(BaseModel):
+    """Schema for updating a schedule - all fields optional"""
+    client_id: Optional[str] = None
+    description: Optional[str] = Field(None, max_length=500)
+    line_items: Optional[List[LineItemCreate]] = None
+    tax_rate: Optional[float] = None
+    recurrence: Optional[Recurrence] = None
+    next_run_date: Optional[date] = None
+    auto_send: Optional[bool] = None
+    active: Optional[bool] = None
 
 
 class ScheduleResponse(BaseModel):
@@ -131,10 +155,14 @@ class ScheduleResponse(BaseModel):
     id: str
     user_id: str
     client_id: str
-    frequency: str
-    next_run: datetime
-    is_active: bool
+    client_name: Optional[str] = None
+    description: Optional[str] = None
     line_items: List[LineItemCreate] = []
+    tax_rate: float = 0
+    recurrence: str
+    next_run_date: date
+    auto_send: bool = False
+    active: bool = True
     created_at: datetime
     updated_at: datetime
 

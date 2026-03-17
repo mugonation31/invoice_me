@@ -76,7 +76,7 @@ describe('NavigationComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 
-  it('should display nav links for Dashboard, Clients, Invoices, Settings', () => {
+  it('should display nav links for Dashboard, Clients, Invoices, Schedules, Settings', () => {
     // Arrange: user is logged in
     mockCurrentUser$.next({ id: '123', email: 'test@test.com', user_metadata: { name: 'Test' } });
     fixture.detectChanges();
@@ -88,6 +88,7 @@ describe('NavigationComponent', () => {
     expect(linkTexts).toContain('Dashboard');
     expect(linkTexts).toContain('Clients');
     expect(linkTexts).toContain('Invoices');
+    expect(linkTexts).toContain('Schedules');
     expect(linkTexts).toContain('Settings');
   });
 });

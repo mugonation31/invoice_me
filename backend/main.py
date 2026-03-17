@@ -15,6 +15,7 @@ from models import (
     ClientCreate, ClientUpdate, ClientResponse,
     InvoiceCreate, InvoiceUpdate, InvoiceResponse, StatusUpdate,
     CompanySettingsUpdate, CompanySettingsResponse,
+    ScheduleCreate, ScheduleUpdate, ScheduleResponse,
     DashboardStats, MessageResponse,
 )
 import database as db
@@ -25,8 +26,18 @@ async def lifespan(app: FastAPI):
     """Handle startup and shutdown events"""
     # Startup: Initialize database pool
     await db.get_pool()
+
+    # Start the scheduler
+    from apscheduler.schedulers.asyncio import AsyncIOScheduler
+    from scheduler import process_due_schedules
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(process_due_schedules, "interval", hours=1, id="process_due_schedules")
+    scheduler.start()
+
     yield
-    # Shutdown: Close database pool
+
+    # Shutdown: Stop scheduler and close database pool
+    scheduler.shutdown(wait=False)
     await db.close_pool()
 
 
@@ -311,3 +322,70 @@ async def get_dashboard(user_id: str = Depends(get_current_user)):
     """Get dashboard statistics for the current user"""
     stats = await db.get_dashboard_stats(user_id)
     return stats
+
+
+# ============================================================
+# Schedule endpoints
+# ============================================================
+
+@app.get("/api/schedules", response_model=List[ScheduleResponse])
+async def get_schedules(user_id: str = Depends(get_current_user)):
+    """Get all schedules for the current user"""
+    schedules = await db.get_schedules(user_id)
+    return schedules
+
+
+@app.post("/api/schedules", response_model=ScheduleResponse, status_code=status.HTTP_201_CREATED)
+async def create_schedule(
+    schedule: ScheduleCreate,
+    user_id: str = Depends(get_current_user)
+):
+    """Create a new schedule"""
+    created_schedule = await db.create_schedule(user_id, schedule)
+    return created_schedule
+
+
+@app.get("/api/schedules/{schedule_id}", response_model=ScheduleResponse)
+async def get_schedule(
+    schedule_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Get a specific schedule by ID"""
+    schedule = await db.get_schedule_by_id(schedule_id, user_id)
+    if not schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Schedule not found"
+        )
+    return schedule
+
+
+@app.patch("/api/schedules/{schedule_id}", response_model=ScheduleResponse)
+async def update_schedule(
+    schedule_id: str,
+    updates: ScheduleUpdate,
+    user_id: str = Depends(get_current_user)
+):
+    """Update a schedule"""
+    updated_schedule = await db.update_schedule(schedule_id, user_id, updates)
+    if not updated_schedule:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Schedule not found"
+        )
+    return updated_schedule
+
+
+@app.delete("/api/schedules/{schedule_id}", response_model=MessageResponse)
+async def delete_schedule(
+    schedule_id: str,
+    user_id: str = Depends(get_current_user)
+):
+    """Delete a schedule"""
+    success = await db.delete_schedule(schedule_id, user_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Schedule not found"
+        )
+    return {"message": "Schedule deleted successfully"}

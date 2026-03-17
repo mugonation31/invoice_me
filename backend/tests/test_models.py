@@ -203,8 +203,8 @@ def test_should_create_valid_schedule_create_model_with_required_fields():
     # Arrange
     data = {
         "client_id": "client-123",
-        "frequency": "monthly",
-        "next_run": "2026-04-01T00:00:00",
+        "recurrence": "monthly",
+        "next_run_date": "2026-04-01",
         "line_items": [
             {"description": "Monthly Retainer", "quantity": 1, "rate": 5000.00},
         ],
@@ -216,7 +216,10 @@ def test_should_create_valid_schedule_create_model_with_required_fields():
 
     # Assert
     assert schedule.client_id == "client-123"
-    assert schedule.frequency == "monthly"
+    assert schedule.recurrence == "monthly"
+    assert schedule.tax_rate == 0
+    assert schedule.auto_send is False
+    assert schedule.description is None
     assert len(schedule.line_items) == 1
 
 
@@ -228,9 +231,13 @@ def test_should_create_valid_schedule_response_model():
         "id": "sched-123",
         "user_id": "user-456",
         "client_id": "client-789",
-        "frequency": "monthly",
-        "next_run": now,
-        "is_active": True,
+        "client_name": "Acme Corp",
+        "description": "Monthly retainer",
+        "recurrence": "monthly",
+        "next_run_date": "2026-04-01",
+        "tax_rate": 10.0,
+        "auto_send": False,
+        "active": True,
         "line_items": [
             {"description": "Monthly Retainer", "quantity": 1, "rate": 5000.00},
         ],
@@ -244,8 +251,9 @@ def test_should_create_valid_schedule_response_model():
 
     # Assert
     assert schedule.id == "sched-123"
-    assert schedule.is_active is True
-    assert schedule.frequency == "monthly"
+    assert schedule.active is True
+    assert schedule.recurrence == "monthly"
+    assert schedule.client_name == "Acme Corp"
 
 
 def test_should_create_valid_company_settings_response_model():

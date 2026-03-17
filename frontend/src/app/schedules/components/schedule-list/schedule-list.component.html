@@ -1,0 +1,57 @@
+<div class="schedule-list-container">
+  <div class="header">
+    <h1>Schedules</h1>
+    <div class="header-actions">
+      <button class="btn-new-schedule" (click)="addSchedule()">
+        + New Schedule
+      </button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    Loading schedules...
+  </div>
+
+  <!-- Schedule Cards -->
+  <div *ngIf="!loading && schedules.length > 0" class="schedules">
+    <div
+      *ngFor="let schedule of schedules; trackBy: trackByScheduleId"
+      class="schedule-card"
+      [class.inactive]="!schedule.active"
+    >
+      <div class="schedule-info">
+        <div class="schedule-header">
+          <h3 class="client-name">{{ schedule.client_name }}</h3>
+          <span class="recurrence-badge" [attr.data-recurrence]="schedule.recurrence">
+            {{ getRecurrenceLabel(schedule.recurrence) }}
+          </span>
+        </div>
+        <p class="schedule-description" *ngIf="schedule.description">{{ schedule.description }}</p>
+        <div class="schedule-meta">
+          <span class="next-run">Next: {{ schedule.next_run_date }}</span>
+          <span class="auto-send-indicator" *ngIf="schedule.auto_send">Auto-send</span>
+          <span class="status-badge" [class.active]="schedule.active" [class.paused]="!schedule.active">
+            {{ schedule.active ? 'Active' : 'Paused' }}
+          </span>
+        </div>
+      </div>
+      <div class="schedule-actions">
+        <button class="btn-toggle" (click)="toggleActive(schedule)">
+          {{ schedule.active ? 'Pause' : 'Resume' }}
+        </button>
+        <button class="btn-delete" (click)="deleteSchedule(schedule)">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && schedules.length === 0" class="empty-state">
+    <p>No schedules found. Create one to automate invoicing!</p>
+  </div>
+</div>

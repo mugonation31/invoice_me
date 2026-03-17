@@ -1,0 +1,179 @@
+<div class="schedule-form-container">
+  <div class="form-wrapper">
+    <h1 class="form-title">New Schedule</h1>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="error-message">
+      {{ error }}
+    </div>
+
+    <form [formGroup]="scheduleForm" (ngSubmit)="onSubmit()" class="schedule-form">
+      <!-- Client Selector -->
+      <div class="form-group">
+        <label for="client_id" class="form-label">
+          Client <span class="required">*</span>
+        </label>
+        <select
+          id="client_id"
+          formControlName="client_id"
+          class="form-input"
+        >
+          <option value="">Select a client</option>
+          <option *ngFor="let client of clients" [value]="client.id">
+            {{ client.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Description -->
+      <div class="form-group">
+        <label for="description" class="form-label">Description</label>
+        <input
+          type="text"
+          id="description"
+          formControlName="description"
+          class="form-input"
+          placeholder="What is this schedule for?"
+        />
+      </div>
+
+      <!-- Recurrence and Next Run Date Row -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="recurrence" class="form-label">
+            Recurrence <span class="required">*</span>
+          </label>
+          <select
+            id="recurrence"
+            formControlName="recurrence"
+            class="form-input"
+          >
+            <option value="">Select frequency</option>
+            <option *ngFor="let opt of recurrenceOptions" [value]="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="next_run_date" class="form-label">
+            Next Run Date <span class="required">*</span>
+          </label>
+          <input
+            type="date"
+            id="next_run_date"
+            formControlName="next_run_date"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <!-- Auto-send Toggle -->
+      <div class="form-group checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="auto_send" />
+          <span>Auto-send invoice when generated</span>
+        </label>
+      </div>
+
+      <!-- Line Items -->
+      <div class="line-items-section">
+        <h2 class="section-title">Line Items</h2>
+
+        <div class="line-items-header">
+          <span class="col-description">Description</span>
+          <span class="col-quantity">Qty</span>
+          <span class="col-rate">Rate</span>
+          <span class="col-amount">Amount</span>
+          <span class="col-action"></span>
+        </div>
+
+        <div formArrayName="line_items">
+          <div
+            *ngFor="let item of lineItems.controls; let i = index"
+            [formGroupName]="i"
+            class="line-item-row"
+          >
+            <input
+              type="text"
+              formControlName="description"
+              class="form-input col-description"
+              placeholder="Description"
+            />
+            <input
+              type="number"
+              formControlName="quantity"
+              class="form-input col-quantity"
+              min="0.01"
+              step="0.01"
+            />
+            <input
+              type="number"
+              formControlName="rate"
+              class="form-input col-rate"
+              min="0"
+              step="0.01"
+            />
+            <span class="col-amount line-item-amount">
+              {{ formatCurrency(getLineItemAmount(i)) }}
+            </span>
+            <button
+              type="button"
+              class="btn-remove-item"
+              (click)="removeLineItem(i)"
+              *ngIf="lineItems.length > 1"
+            >
+              X
+            </button>
+          </div>
+        </div>
+
+        <button type="button" class="btn-add-item" (click)="addLineItem()">
+          + Add Line Item
+        </button>
+      </div>
+
+      <!-- Tax Rate -->
+      <div class="form-group">
+        <label for="tax_rate" class="form-label">Tax Rate (%)</label>
+        <input
+          type="number"
+          id="tax_rate"
+          formControlName="tax_rate"
+          class="form-input tax-input"
+          min="0"
+          step="0.01"
+        />
+      </div>
+
+      <!-- Totals -->
+      <div class="totals-section">
+        <div class="total-row">
+          <span class="total-label">Subtotal</span>
+          <span class="total-value">{{ formatCurrency(subtotal) }}</span>
+        </div>
+        <div class="total-row">
+          <span class="total-label">Tax</span>
+          <span class="total-value">{{ formatCurrency(taxAmount) }}</span>
+        </div>
+        <div class="total-row total-due">
+          <span class="total-label">Total Due</span>
+          <span class="total-value">{{ formatCurrency(totalDue) }}</span>
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-cancel" (click)="onCancel()">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-submit"
+          [disabled]="scheduleForm.invalid || loading"
+        >
+          Create Schedule
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
