@@ -245,11 +245,11 @@ def test_should_create_valid_company_settings_response_model():
         "company_name": "My Company LLC",
         "company_email": "info@mycompany.com",
         "company_phone": "555-0200",
-        "company_address": "456 Business Ave",
-        "tax_rate": 10.0,
-        "invoice_prefix": "INV",
-        "invoice_next_number": 42,
-        "payment_terms": "Net 30",
+        "bank_account_name": "My Company LLC",
+        "bank_name": "Barclays",
+        "account_number": "12345678",
+        "sort_code": "20-30-40",
+        "iban": "GB29NWBK60161331926819",
         "created_at": now,
         "updated_at": now,
     }
@@ -260,9 +260,9 @@ def test_should_create_valid_company_settings_response_model():
 
     # Assert
     assert settings.company_name == "My Company LLC"
-    assert settings.tax_rate == 10.0
-    assert settings.invoice_prefix == "INV"
-    assert settings.invoice_next_number == 42
+    assert settings.bank_name == "Barclays"
+    assert settings.account_number == "12345678"
+    assert settings.sort_code == "20-30-40"
 
 
 def test_should_create_valid_dashboard_stats_model():

@@ -138,12 +138,46 @@ async def delete_invoice(invoice_id: str, user_id: str) -> bool:
 
 async def get_company_settings(user_id: str) -> Optional[Dict[str, Any]]:
     """Get company settings for a user"""
-    pass
+    db = await get_pool()
+    row = await db.fetchrow(
+        "SELECT * FROM company_settings WHERE user_id = $1",
+        user_id
+    )
+    return dict(row) if row else None
 
 
 async def upsert_company_settings(user_id: str, settings_data) -> Dict[str, Any]:
-    """Create or update company settings"""
-    pass
+    """Create or update company settings (upsert)"""
+    update_data = settings_data.model_dump(exclude_unset=True)
+
+    db = await get_pool()
+    row = await db.fetchrow(
+        """INSERT INTO company_settings (
+               user_id, company_name, company_email, company_phone,
+               bank_account_name, bank_name, account_number, sort_code, iban
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+           ON CONFLICT (user_id) DO UPDATE SET
+               company_name = COALESCE($2, company_settings.company_name),
+               company_email = COALESCE($3, company_settings.company_email),
+               company_phone = COALESCE($4, company_settings.company_phone),
+               bank_account_name = COALESCE($5, company_settings.bank_account_name),
+               bank_name = COALESCE($6, company_settings.bank_name),
+               account_number = COALESCE($7, company_settings.account_number),
+               sort_code = COALESCE($8, company_settings.sort_code),
+               iban = COALESCE($9, company_settings.iban),
+               updated_at = NOW()
+           RETURNING *""",
+        user_id,
+        update_data.get("company_name"),
+        update_data.get("company_email"),
+        update_data.get("company_phone"),
+        update_data.get("bank_account_name"),
+        update_data.get("bank_name"),
+        update_data.get("account_number"),
+        update_data.get("sort_code"),
+        update_data.get("iban"),
+    )
+    return dict(row)
 
 
 # ============================================================

@@ -133,11 +133,11 @@ class CompanySettingsUpdate(BaseModel):
     company_name: Optional[str] = Field(None, max_length=200)
     company_email: Optional[str] = None
     company_phone: Optional[str] = Field(None, max_length=50)
-    company_address: Optional[str] = Field(None, max_length=500)
-    tax_rate: Optional[float] = None
-    invoice_prefix: Optional[str] = Field(None, max_length=20)
-    invoice_next_number: Optional[int] = None
-    payment_terms: Optional[str] = Field(None, max_length=200)
+    bank_account_name: Optional[str] = Field(None, max_length=200)
+    bank_name: Optional[str] = Field(None, max_length=200)
+    account_number: Optional[str] = Field(None, max_length=50)
+    sort_code: Optional[str] = Field(None, max_length=20)
+    iban: Optional[str] = Field(None, max_length=50)
 
 
 class CompanySettingsResponse(BaseModel):
@@ -147,11 +147,11 @@ class CompanySettingsResponse(BaseModel):
     company_name: Optional[str]
     company_email: Optional[str]
     company_phone: Optional[str]
-    company_address: Optional[str]
-    tax_rate: Optional[float]
-    invoice_prefix: Optional[str]
-    invoice_next_number: Optional[int]
-    payment_terms: Optional[str]
+    bank_account_name: Optional[str]
+    bank_name: Optional[str]
+    account_number: Optional[str]
+    sort_code: Optional[str]
+    iban: Optional[str]
     created_at: datetime
     updated_at: datetime
 

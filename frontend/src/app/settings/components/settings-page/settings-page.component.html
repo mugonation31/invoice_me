@@ -1,0 +1,124 @@
+<div class="settings-container">
+  <div class="header">
+    <h1>Settings</h1>
+  </div>
+
+  <div class="success-message" *ngIf="successMessage">
+    {{ successMessage }}
+  </div>
+
+  <div class="error-message" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <form [formGroup]="settingsForm" (ngSubmit)="onSave()" class="settings-form">
+    <!-- Company Details Section -->
+    <div class="settings-card">
+      <h2 class="section-title">Company Details</h2>
+
+      <div class="form-group">
+        <label for="company_name" class="form-label">Company Name</label>
+        <input
+          type="text"
+          id="company_name"
+          formControlName="company_name"
+          class="form-input"
+          placeholder="Your company name"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="company_email" class="form-label">Company Email</label>
+        <input
+          type="email"
+          id="company_email"
+          formControlName="company_email"
+          class="form-input"
+          placeholder="company@example.com"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="company_phone" class="form-label">Company Phone</label>
+        <input
+          type="text"
+          id="company_phone"
+          formControlName="company_phone"
+          class="form-input"
+          placeholder="Phone number"
+        />
+      </div>
+    </div>
+
+    <!-- Payment Details Section -->
+    <div class="settings-card">
+      <h2 class="section-title">Payment Details</h2>
+
+      <div class="form-group">
+        <label for="bank_account_name" class="form-label">Bank Account Name</label>
+        <input
+          type="text"
+          id="bank_account_name"
+          formControlName="bank_account_name"
+          class="form-input"
+          placeholder="Account holder name"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="bank_name" class="form-label">Bank Name</label>
+        <input
+          type="text"
+          id="bank_name"
+          formControlName="bank_name"
+          class="form-input"
+          placeholder="e.g. Barclays, HSBC"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="account_number" class="form-label">Account Number</label>
+        <input
+          type="text"
+          id="account_number"
+          formControlName="account_number"
+          class="form-input"
+          placeholder="12345678"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="sort_code" class="form-label">Sort Code</label>
+        <input
+          type="text"
+          id="sort_code"
+          formControlName="sort_code"
+          class="form-input"
+          placeholder="20-30-40"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="iban" class="form-label">IBAN</label>
+        <input
+          type="text"
+          id="iban"
+          formControlName="iban"
+          class="form-input"
+          placeholder="GB29NWBK60161331926819"
+        />
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div class="form-actions">
+      <button
+        type="submit"
+        class="btn btn-submit"
+        [disabled]="loading"
+      >
+        {{ loading ? 'Saving...' : 'Save Settings' }}
+      </button>
+    </div>
+  </form>
+</div>
