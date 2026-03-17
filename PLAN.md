@@ -33,9 +33,9 @@ Replicates TODO app architecture from ~/workspace/projects/TODO.
 
 ## Phase 5: Invoice CRUD — Backend
 
-- [ ] **Task 5.1** - Invoice backend models (S)
-- [ ] **Task 5.2** - Invoice database operations (M)
-- [ ] **Task 5.3** - Invoice API endpoints (M)
+- [x] **Task 5.1** - Invoice backend models (S)
+- [x] **Task 5.2** - Invoice database operations (M)
+- [x] **Task 5.3** - Invoice API endpoints (M)
 
 ## Phase 6: Invoice CRUD — Frontend
 
