@@ -51,8 +51,8 @@ Replicates TODO app architecture from ~/workspace/projects/TODO.
 
 ## Phase 8: Email Sending
 
-- [ ] **Task 8.1** - SendGrid email backend (M)
-- [ ] **Task 8.2** - Send invoice endpoint + UI (S)
+- [x] **Task 8.1** - SendGrid email backend (M)
+- [x] **Task 8.2** - Send invoice endpoint + UI (S)
 
 ## Phase 9: Scheduling
 
