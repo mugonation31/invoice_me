@@ -104,32 +104,243 @@ async def delete_client(client_id: str, user_id: str) -> bool:
 
 
 # ============================================================
-# Invoice CRUD operations (placeholder)
+# Invoice CRUD operations
 # ============================================================
 
+async def get_next_invoice_number(user_id: str) -> str:
+    """Generate next invoice number for a user (INV-0001 format)"""
+    db = await get_pool()
+    row = await db.fetchrow(
+        "SELECT COUNT(*) as count FROM invoices WHERE user_id = $1",
+        user_id
+    )
+    next_num = (row["count"] if row else 0) + 1
+    return f"INV-{next_num:04d}"
+
+
 async def get_invoices(user_id: str) -> List[Dict[str, Any]]:
-    """Get all invoices for a user"""
-    pass
+    """Get all invoices for a user with client name joined, ordered by created_at DESC.
+    Does NOT fetch line items (list view doesn't need them)."""
+    db = await get_pool()
+    rows = await db.fetch(
+        """SELECT i.*, c.name as client_name, c.email as client_email
+           FROM invoices i
+           LEFT JOIN clients c ON i.client_id = c.id
+           WHERE i.user_id = $1
+           ORDER BY i.created_at DESC""",
+        user_id
+    )
+    result = []
+    for row in rows:
+        invoice = dict(row)
+        invoice["line_items"] = []
+        result.append(invoice)
+    return result
 
 
 async def get_invoice_by_id(invoice_id: str, user_id: str) -> Optional[Dict[str, Any]]:
-    """Get a single invoice by ID"""
-    pass
+    """Get a single invoice by ID with client name AND all its line items."""
+    db = await get_pool()
+    # Fetch invoice with client info
+    row = await db.fetchrow(
+        """SELECT i.*, c.name as client_name, c.email as client_email
+           FROM invoices i
+           LEFT JOIN clients c ON i.client_id = c.id
+           WHERE i.id = $1 AND i.user_id = $2""",
+        invoice_id, user_id
+    )
+    if not row:
+        return None
+
+    invoice = dict(row)
+
+    # Fetch line items
+    line_rows = await db.fetch(
+        """SELECT * FROM line_items
+           WHERE invoice_id = $1
+           ORDER BY sort_order ASC""",
+        invoice_id
+    )
+    invoice["line_items"] = [dict(lr) for lr in line_rows]
+    return invoice
 
 
 async def create_invoice(user_id: str, invoice) -> Dict[str, Any]:
     """Create a new invoice with line items"""
-    pass
+    db = await get_pool()
+
+    # Generate next invoice number
+    invoice_number = await get_next_invoice_number(user_id)
+
+    # Calculate subtotal from line items
+    subtotal = sum(item.quantity * item.rate for item in invoice.line_items)
+    tax_amount = subtotal * invoice.tax_rate / 100
+    total_due = subtotal + tax_amount
+
+    # Insert invoice record
+    row = await db.fetchrow(
+        """INSERT INTO invoices (
+               user_id, client_id, invoice_number, status,
+               issue_date, due_date, tax_rate, subtotal, tax_amount, total_due, notes
+           ) VALUES ($1, $2, $3, 'draft', $4, $5, $6, $7, $8, $9, $10)
+           RETURNING *""",
+        user_id, invoice.client_id, invoice_number,
+        invoice.issue_date, invoice.due_date, invoice.tax_rate,
+        subtotal, tax_amount, total_due, invoice.notes
+    )
+    invoice_dict = dict(row)
+    invoice_id = invoice_dict["id"]
+
+    # Insert all line items
+    line_items = []
+    for idx, item in enumerate(invoice.line_items):
+        amount = item.quantity * item.rate
+        li_row = await db.fetchrow(
+            """INSERT INTO line_items (
+                   invoice_id, description, quantity, rate, amount, sort_order
+               ) VALUES ($1, $2, $3, $4, $5, $6)
+               RETURNING *""",
+            invoice_id, item.description, item.quantity, item.rate, amount, idx
+        )
+        line_items.append(dict(li_row))
+
+    invoice_dict["line_items"] = line_items
+
+    # Fetch client name/email
+    client_row = await db.fetchrow(
+        "SELECT name, email FROM clients WHERE id = $1",
+        invoice.client_id
+    )
+    invoice_dict["client_name"] = client_row["name"] if client_row else None
+    invoice_dict["client_email"] = client_row["email"] if client_row else None
+
+    return invoice_dict
 
 
 async def update_invoice(invoice_id: str, user_id: str, updates) -> Optional[Dict[str, Any]]:
-    """Update an invoice"""
-    pass
+    """Update an invoice with dynamic fields"""
+    update_data = updates.model_dump(exclude_unset=True)
+    if not update_data:
+        return await get_invoice_by_id(invoice_id, user_id)
+
+    db = await get_pool()
+
+    # Handle line items separately
+    line_items_data = update_data.pop("line_items", None)
+
+    # If line_items or tax_rate changed, recalculate totals
+    needs_recalc = line_items_data is not None or "tax_rate" in update_data
+
+    if line_items_data is not None:
+        # Delete existing line items and re-insert
+        await db.execute(
+            "DELETE FROM line_items WHERE invoice_id = $1",
+            invoice_id
+        )
+        for idx, item in enumerate(line_items_data):
+            amount = item["quantity"] * item["rate"]
+            await db.fetchrow(
+                """INSERT INTO line_items (
+                       invoice_id, description, quantity, rate, amount, sort_order
+                   ) VALUES ($1, $2, $3, $4, $5, $6)
+                   RETURNING *""",
+                invoice_id, item["description"], item["quantity"],
+                item["rate"], amount, idx
+            )
+
+    if needs_recalc:
+        # Recalculate from line items in DB
+        li_rows = await db.fetch(
+            "SELECT quantity, rate FROM line_items WHERE invoice_id = $1",
+            invoice_id
+        )
+        subtotal = sum(r["quantity"] * r["rate"] for r in li_rows)
+
+        # Get tax_rate: use updated value if provided, otherwise fetch current
+        if "tax_rate" in update_data:
+            tax_rate = update_data["tax_rate"]
+        else:
+            current = await db.fetchrow(
+                "SELECT tax_rate FROM invoices WHERE id = $1",
+                invoice_id
+            )
+            tax_rate = current["tax_rate"] if current else 0
+
+        tax_amount = subtotal * tax_rate / 100
+        total_due = subtotal + tax_amount
+
+        update_data["subtotal"] = subtotal
+        update_data["tax_amount"] = tax_amount
+        update_data["total_due"] = total_due
+
+    # Convert status enum to string if present
+    if "status" in update_data and update_data["status"] is not None:
+        update_data["status"] = update_data["status"].value if hasattr(update_data["status"], "value") else update_data["status"]
+
+    # Build SET clause from remaining fields
+    if update_data:
+        set_clauses = []
+        values = []
+        for i, (key, value) in enumerate(update_data.items(), start=1):
+            set_clauses.append(f"{key} = ${i}")
+            values.append(value)
+
+        set_clauses.append("updated_at = NOW()")
+
+        param_offset = len(values) + 1
+        values.append(invoice_id)
+        values.append(user_id)
+
+        query = f"""UPDATE invoices
+                    SET {', '.join(set_clauses)}
+                    WHERE id = ${param_offset} AND user_id = ${param_offset + 1}
+                    RETURNING *"""
+
+        row = await db.fetchrow(query, *values)
+        if not row:
+            return None
+    else:
+        # Only line items changed, just touch updated_at
+        row = await db.fetchrow(
+            """UPDATE invoices SET updated_at = NOW()
+               WHERE id = $1 AND user_id = $2
+               RETURNING *""",
+            invoice_id, user_id
+        )
+        if not row:
+            return None
+
+    return await get_invoice_by_id(invoice_id, user_id)
 
 
 async def delete_invoice(invoice_id: str, user_id: str) -> bool:
-    """Delete an invoice"""
-    pass
+    """Delete an invoice (cascade deletes line items)"""
+    db = await get_pool()
+    # Delete line items first
+    await db.execute(
+        "DELETE FROM line_items WHERE invoice_id = $1",
+        invoice_id
+    )
+    result = await db.execute(
+        "DELETE FROM invoices WHERE id = $1 AND user_id = $2",
+        invoice_id, user_id
+    )
+    return result == "DELETE 1"
+
+
+async def update_invoice_status(invoice_id: str, user_id: str, status: str) -> Optional[Dict[str, Any]]:
+    """Update invoice status only"""
+    db = await get_pool()
+    row = await db.fetchrow(
+        """UPDATE invoices
+           SET status = $1, updated_at = NOW()
+           WHERE id = $2 AND user_id = $3
+           RETURNING *""",
+        status, invoice_id, user_id
+    )
+    if not row:
+        return None
+    return await get_invoice_by_id(invoice_id, user_id)
 
 
 # ============================================================

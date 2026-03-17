@@ -3,7 +3,7 @@ Pydantic models for request/response validation
 """
 from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, date
 from enum import Enum
 
 
@@ -49,8 +49,8 @@ class ClientResponse(BaseModel):
 class LineItemCreate(BaseModel):
     """Schema for creating an invoice line item"""
     description: str = Field(..., min_length=1, max_length=500, description="Line item description")
-    quantity: float = Field(..., gt=0, description="Quantity")
-    unit_price: float = Field(..., ge=0, description="Unit price")
+    quantity: float = Field(1, gt=0, description="Quantity")
+    rate: float = Field(..., ge=0, description="Rate per unit")
 
 
 class LineItemResponse(BaseModel):
@@ -59,8 +59,10 @@ class LineItemResponse(BaseModel):
     invoice_id: str
     description: str
     quantity: float
-    unit_price: float
-    line_total: float
+    rate: float
+    amount: float
+    sort_order: int = 0
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -69,7 +71,9 @@ class LineItemResponse(BaseModel):
 class InvoiceCreate(BaseModel):
     """Schema for creating a new invoice"""
     client_id: str = Field(..., description="Client ID")
-    due_date: Optional[datetime] = Field(None, description="Due date")
+    issue_date: date = Field(default_factory=date.today, description="Issue date")
+    due_date: date = Field(..., description="Due date")
+    tax_rate: float = Field(0, ge=0, description="Tax rate percentage")
     line_items: List[LineItemCreate] = Field(default_factory=list, description="Invoice line items")
     notes: Optional[str] = Field(None, max_length=2000, description="Invoice notes")
 
@@ -77,10 +81,17 @@ class InvoiceCreate(BaseModel):
 class InvoiceUpdate(BaseModel):
     """Schema for updating an invoice"""
     client_id: Optional[str] = None
+    issue_date: Optional[date] = None
+    due_date: Optional[date] = None
+    tax_rate: Optional[float] = None
     status: Optional[InvoiceStatus] = None
-    due_date: Optional[datetime] = None
     notes: Optional[str] = Field(None, max_length=2000)
     line_items: Optional[List[LineItemCreate]] = None
+
+
+class StatusUpdate(BaseModel):
+    """Schema for updating invoice status only"""
+    status: InvoiceStatus
 
 
 class InvoiceResponse(BaseModel):
@@ -88,14 +99,17 @@ class InvoiceResponse(BaseModel):
     id: str
     user_id: str
     client_id: str
+    client_name: Optional[str] = None
+    client_email: Optional[str] = None
     invoice_number: str
     status: InvoiceStatus
-    due_date: Optional[datetime]
+    issue_date: Optional[date] = None
+    due_date: Optional[date] = None
     subtotal: float
-    tax_rate: Optional[float]
-    tax_amount: Optional[float]
-    total: float
-    notes: Optional[str]
+    tax_rate: float = 0
+    tax_amount: float = 0
+    total_due: float
+    notes: Optional[str] = None
     line_items: List[LineItemResponse] = []
     created_at: datetime
     updated_at: datetime

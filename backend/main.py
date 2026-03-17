@@ -11,7 +11,7 @@ from config import settings
 from auth import get_current_user
 from models import (
     ClientCreate, ClientUpdate, ClientResponse,
-    InvoiceCreate, InvoiceUpdate, InvoiceResponse,
+    InvoiceCreate, InvoiceUpdate, InvoiceResponse, StatusUpdate,
     CompanySettingsUpdate, CompanySettingsResponse,
     DashboardStats, MessageResponse,
 )
@@ -158,6 +158,22 @@ async def get_invoice(
             detail="Invoice not found"
         )
     return invoice
+
+
+@app.patch("/api/invoices/{invoice_id}/status", response_model=InvoiceResponse)
+async def update_invoice_status(
+    invoice_id: str,
+    body: StatusUpdate,
+    user_id: str = Depends(get_current_user)
+):
+    """Update invoice status only"""
+    updated_invoice = await db.update_invoice_status(invoice_id, user_id, body.status.value)
+    if not updated_invoice:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invoice not found"
+        )
+    return updated_invoice
 
 
 @app.patch("/api/invoices/{invoice_id}", response_model=InvoiceResponse)

@@ -83,7 +83,7 @@ def test_should_create_valid_line_item_create_model_with_required_fields():
     data = {
         "description": "Web Development",
         "quantity": 10.0,
-        "unit_price": 150.00,
+        "rate": 150.00,
     }
 
     # Act
@@ -93,19 +93,22 @@ def test_should_create_valid_line_item_create_model_with_required_fields():
     # Assert
     assert item.description == "Web Development"
     assert item.quantity == 10.0
-    assert item.unit_price == 150.00
+    assert item.rate == 150.00
 
 
 def test_should_create_valid_line_item_response_model_with_all_fields():
     """should create a valid LineItemResponse model with all fields"""
     # Arrange
+    now = datetime.utcnow()
     data = {
         "id": "item-123",
         "invoice_id": "inv-456",
         "description": "Web Development",
         "quantity": 10.0,
-        "unit_price": 150.00,
-        "line_total": 1500.00,
+        "rate": 150.00,
+        "amount": 1500.00,
+        "sort_order": 0,
+        "created_at": now,
     }
 
     # Act
@@ -115,7 +118,8 @@ def test_should_create_valid_line_item_response_model_with_all_fields():
     # Assert
     assert item.id == "item-123"
     assert item.invoice_id == "inv-456"
-    assert item.line_total == 1500.00
+    assert item.amount == 1500.00
+    assert item.sort_order == 0
 
 
 def test_should_create_valid_invoice_create_model_with_nested_line_items():
@@ -123,10 +127,11 @@ def test_should_create_valid_invoice_create_model_with_nested_line_items():
     # Arrange
     data = {
         "client_id": "client-123",
-        "due_date": "2026-04-01T00:00:00",
+        "due_date": "2026-04-01",
+        "tax_rate": 10.0,
         "line_items": [
-            {"description": "Web Dev", "quantity": 10, "unit_price": 150.00},
-            {"description": "Design", "quantity": 5, "unit_price": 100.00},
+            {"description": "Web Dev", "quantity": 10, "rate": 150.00},
+            {"description": "Design", "quantity": 5, "rate": 100.00},
         ],
         "notes": "Payment due within 30 days",
     }
@@ -137,6 +142,7 @@ def test_should_create_valid_invoice_create_model_with_nested_line_items():
 
     # Assert
     assert invoice.client_id == "client-123"
+    assert invoice.tax_rate == 10.0
     assert len(invoice.line_items) == 2
     assert invoice.line_items[0].description == "Web Dev"
     assert invoice.notes == "Payment due within 30 days"
@@ -150,13 +156,16 @@ def test_should_create_valid_invoice_response_model_with_nested_line_items():
         "id": "inv-123",
         "user_id": "user-456",
         "client_id": "client-789",
+        "client_name": "Acme Corp",
+        "client_email": "billing@acme.com",
         "invoice_number": "INV-001",
         "status": "draft",
-        "due_date": now,
+        "issue_date": "2026-01-15",
+        "due_date": "2026-02-15",
         "subtotal": 2000.00,
         "tax_rate": 10.0,
         "tax_amount": 200.00,
-        "total": 2200.00,
+        "total_due": 2200.00,
         "notes": "Net 30",
         "line_items": [
             {
@@ -164,8 +173,10 @@ def test_should_create_valid_invoice_response_model_with_nested_line_items():
                 "invoice_id": "inv-123",
                 "description": "Web Dev",
                 "quantity": 10,
-                "unit_price": 150.00,
-                "line_total": 1500.00,
+                "rate": 150.00,
+                "amount": 1500.00,
+                "sort_order": 0,
+                "created_at": now,
             },
         ],
         "created_at": now,
@@ -180,9 +191,11 @@ def test_should_create_valid_invoice_response_model_with_nested_line_items():
     assert invoice.id == "inv-123"
     assert invoice.invoice_number == "INV-001"
     assert invoice.status == "draft"
-    assert invoice.total == 2200.00
+    assert invoice.total_due == 2200.00
+    assert invoice.client_name == "Acme Corp"
+    assert invoice.client_email == "billing@acme.com"
     assert len(invoice.line_items) == 1
-    assert invoice.line_items[0].line_total == 1500.00
+    assert invoice.line_items[0].amount == 1500.00
 
 
 def test_should_create_valid_schedule_create_model_with_required_fields():
@@ -193,7 +206,7 @@ def test_should_create_valid_schedule_create_model_with_required_fields():
         "frequency": "monthly",
         "next_run": "2026-04-01T00:00:00",
         "line_items": [
-            {"description": "Monthly Retainer", "quantity": 1, "unit_price": 5000.00},
+            {"description": "Monthly Retainer", "quantity": 1, "rate": 5000.00},
         ],
     }
 
@@ -219,7 +232,7 @@ def test_should_create_valid_schedule_response_model():
         "next_run": now,
         "is_active": True,
         "line_items": [
-            {"description": "Monthly Retainer", "quantity": 1, "unit_price": 5000.00},
+            {"description": "Monthly Retainer", "quantity": 1, "rate": 5000.00},
         ],
         "created_at": now,
         "updated_at": now,
