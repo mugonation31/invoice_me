@@ -62,9 +62,9 @@ Replicates TODO app architecture from ~/workspace/projects/TODO.
 
 ## Phase 10: Dashboard + Polish
 
-- [ ] **Task 10.1** - Dashboard backend stats endpoint (S)
-- [ ] **Task 10.2** - Dashboard frontend page (M)
-- [ ] **Task 10.3** - App routing + final integration (S)
+- [x] **Task 10.1** - Dashboard backend stats endpoint (S)
+- [x] **Task 10.2** - Dashboard frontend page (M)
+- [x] **Task 10.3** - App routing + final integration (S)
 
 ## Risks
 - ReportLab chosen over WeasyPrint (simpler Docker builds)
