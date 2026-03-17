@@ -1,0 +1,287 @@
+"""
+Tests for Pydantic models
+"""
+import pytest
+from datetime import datetime
+
+
+def test_should_create_valid_client_create_model_with_required_fields():
+    """should create a valid ClientCreate model with required fields"""
+    # Arrange
+    data = {
+        "name": "Acme Corp",
+        "email": "billing@acme.com",
+    }
+
+    # Act
+    from models import ClientCreate
+    client = ClientCreate(**data)
+
+    # Assert
+    assert client.name == "Acme Corp"
+    assert client.email == "billing@acme.com"
+    assert client.phone is None
+    assert client.address is None
+
+
+def test_should_create_valid_client_update_model_with_all_optional_fields():
+    """should create a valid ClientUpdate model with all optional fields"""
+    # Arrange / Act
+    from models import ClientUpdate
+    client = ClientUpdate()
+
+    # Assert - all fields should be None (optional)
+    assert client.name is None
+    assert client.email is None
+    assert client.phone is None
+    assert client.address is None
+
+
+def test_should_create_valid_client_response_model_with_all_fields():
+    """should create a valid ClientResponse model with all fields"""
+    # Arrange
+    now = datetime.utcnow()
+    data = {
+        "id": "uuid-123",
+        "user_id": "user-456",
+        "name": "Acme Corp",
+        "email": "billing@acme.com",
+        "phone": "555-0100",
+        "address": "123 Main St",
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    # Act
+    from models import ClientResponse
+    client = ClientResponse(**data)
+
+    # Assert
+    assert client.id == "uuid-123"
+    assert client.user_id == "user-456"
+    assert client.name == "Acme Corp"
+    assert client.email == "billing@acme.com"
+    assert client.created_at == now
+
+
+def test_should_create_valid_invoice_status_enum_with_correct_values():
+    """should create a valid InvoiceStatus enum with correct values"""
+    # Act
+    from models import InvoiceStatus
+
+    # Assert
+    assert InvoiceStatus.DRAFT == "draft"
+    assert InvoiceStatus.SENT == "sent"
+    assert InvoiceStatus.PAID == "paid"
+    assert InvoiceStatus.OVERDUE == "overdue"
+    assert len(InvoiceStatus) == 4
+
+
+def test_should_create_valid_line_item_create_model_with_required_fields():
+    """should create a valid LineItemCreate model with required fields"""
+    # Arrange
+    data = {
+        "description": "Web Development",
+        "quantity": 10.0,
+        "unit_price": 150.00,
+    }
+
+    # Act
+    from models import LineItemCreate
+    item = LineItemCreate(**data)
+
+    # Assert
+    assert item.description == "Web Development"
+    assert item.quantity == 10.0
+    assert item.unit_price == 150.00
+
+
+def test_should_create_valid_line_item_response_model_with_all_fields():
+    """should create a valid LineItemResponse model with all fields"""
+    # Arrange
+    data = {
+        "id": "item-123",
+        "invoice_id": "inv-456",
+        "description": "Web Development",
+        "quantity": 10.0,
+        "unit_price": 150.00,
+        "line_total": 1500.00,
+    }
+
+    # Act
+    from models import LineItemResponse
+    item = LineItemResponse(**data)
+
+    # Assert
+    assert item.id == "item-123"
+    assert item.invoice_id == "inv-456"
+    assert item.line_total == 1500.00
+
+
+def test_should_create_valid_invoice_create_model_with_nested_line_items():
+    """should create a valid InvoiceCreate model with nested line items"""
+    # Arrange
+    data = {
+        "client_id": "client-123",
+        "due_date": "2026-04-01T00:00:00",
+        "line_items": [
+            {"description": "Web Dev", "quantity": 10, "unit_price": 150.00},
+            {"description": "Design", "quantity": 5, "unit_price": 100.00},
+        ],
+        "notes": "Payment due within 30 days",
+    }
+
+    # Act
+    from models import InvoiceCreate
+    invoice = InvoiceCreate(**data)
+
+    # Assert
+    assert invoice.client_id == "client-123"
+    assert len(invoice.line_items) == 2
+    assert invoice.line_items[0].description == "Web Dev"
+    assert invoice.notes == "Payment due within 30 days"
+
+
+def test_should_create_valid_invoice_response_model_with_nested_line_items():
+    """should create a valid InvoiceResponse model with nested line items and computed fields"""
+    # Arrange
+    now = datetime.utcnow()
+    data = {
+        "id": "inv-123",
+        "user_id": "user-456",
+        "client_id": "client-789",
+        "invoice_number": "INV-001",
+        "status": "draft",
+        "due_date": now,
+        "subtotal": 2000.00,
+        "tax_rate": 10.0,
+        "tax_amount": 200.00,
+        "total": 2200.00,
+        "notes": "Net 30",
+        "line_items": [
+            {
+                "id": "item-1",
+                "invoice_id": "inv-123",
+                "description": "Web Dev",
+                "quantity": 10,
+                "unit_price": 150.00,
+                "line_total": 1500.00,
+            },
+        ],
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    # Act
+    from models import InvoiceResponse
+    invoice = InvoiceResponse(**data)
+
+    # Assert
+    assert invoice.id == "inv-123"
+    assert invoice.invoice_number == "INV-001"
+    assert invoice.status == "draft"
+    assert invoice.total == 2200.00
+    assert len(invoice.line_items) == 1
+    assert invoice.line_items[0].line_total == 1500.00
+
+
+def test_should_create_valid_schedule_create_model_with_required_fields():
+    """should create a valid ScheduleCreate model with required fields"""
+    # Arrange
+    data = {
+        "client_id": "client-123",
+        "frequency": "monthly",
+        "next_run": "2026-04-01T00:00:00",
+        "line_items": [
+            {"description": "Monthly Retainer", "quantity": 1, "unit_price": 5000.00},
+        ],
+    }
+
+    # Act
+    from models import ScheduleCreate
+    schedule = ScheduleCreate(**data)
+
+    # Assert
+    assert schedule.client_id == "client-123"
+    assert schedule.frequency == "monthly"
+    assert len(schedule.line_items) == 1
+
+
+def test_should_create_valid_schedule_response_model():
+    """should create a valid ScheduleResponse model"""
+    # Arrange
+    now = datetime.utcnow()
+    data = {
+        "id": "sched-123",
+        "user_id": "user-456",
+        "client_id": "client-789",
+        "frequency": "monthly",
+        "next_run": now,
+        "is_active": True,
+        "line_items": [
+            {"description": "Monthly Retainer", "quantity": 1, "unit_price": 5000.00},
+        ],
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    # Act
+    from models import ScheduleResponse
+    schedule = ScheduleResponse(**data)
+
+    # Assert
+    assert schedule.id == "sched-123"
+    assert schedule.is_active is True
+    assert schedule.frequency == "monthly"
+
+
+def test_should_create_valid_company_settings_response_model():
+    """should create a valid CompanySettingsResponse model with all fields"""
+    # Arrange
+    now = datetime.utcnow()
+    data = {
+        "id": "settings-123",
+        "user_id": "user-456",
+        "company_name": "My Company LLC",
+        "company_email": "info@mycompany.com",
+        "company_phone": "555-0200",
+        "company_address": "456 Business Ave",
+        "tax_rate": 10.0,
+        "invoice_prefix": "INV",
+        "invoice_next_number": 42,
+        "payment_terms": "Net 30",
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    # Act
+    from models import CompanySettingsResponse
+    settings = CompanySettingsResponse(**data)
+
+    # Assert
+    assert settings.company_name == "My Company LLC"
+    assert settings.tax_rate == 10.0
+    assert settings.invoice_prefix == "INV"
+    assert settings.invoice_next_number == 42
+
+
+def test_should_create_valid_dashboard_stats_model():
+    """should create a valid DashboardStats model"""
+    # Arrange
+    data = {
+        "total_clients": 25,
+        "total_invoices": 100,
+        "total_revenue": 50000.00,
+        "outstanding_amount": 12000.00,
+        "overdue_count": 3,
+        "paid_this_month": 8000.00,
+    }
+
+    # Act
+    from models import DashboardStats
+    stats = DashboardStats(**data)
+
+    # Assert
+    assert stats.total_clients == 25
+    assert stats.total_revenue == 50000.00
+    assert stats.overdue_count == 3
