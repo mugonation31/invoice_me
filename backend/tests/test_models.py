@@ -296,6 +296,8 @@ def test_should_create_valid_dashboard_stats_model():
         "outstanding_amount": 12000.00,
         "overdue_count": 3,
         "paid_this_month": 8000.00,
+        "draft_count": 5,
+        "recent_invoices": [],
     }
 
     # Act
@@ -306,3 +308,5 @@ def test_should_create_valid_dashboard_stats_model():
     assert stats.total_clients == 25
     assert stats.total_revenue == 50000.00
     assert stats.overdue_count == 3
+    assert stats.draft_count == 5
+    assert stats.recent_invoices == []

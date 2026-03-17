@@ -201,6 +201,16 @@ class CompanySettingsResponse(BaseModel):
         from_attributes = True
 
 
+class RecentInvoice(BaseModel):
+    """Schema for a recent invoice in dashboard"""
+    id: str
+    invoice_number: str
+    client_name: Optional[str] = None
+    total_due: float
+    status: str
+    created_at: str
+
+
 class DashboardStats(BaseModel):
     """Schema for dashboard statistics"""
     total_clients: int
@@ -209,6 +219,8 @@ class DashboardStats(BaseModel):
     outstanding_amount: float
     overdue_count: int
     paid_this_month: float
+    draft_count: int
+    recent_invoices: List[RecentInvoice] = []
 
 
 class MessageResponse(BaseModel):

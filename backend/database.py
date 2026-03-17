@@ -397,7 +397,86 @@ async def upsert_company_settings(user_id: str, settings_data) -> Dict[str, Any]
 
 async def get_dashboard_stats(user_id: str) -> Dict[str, Any]:
     """Get dashboard statistics"""
-    pass
+    conn = await get_pool()
+
+    # Total clients
+    row = await conn.fetchrow(
+        "SELECT COUNT(*) as count FROM clients WHERE user_id = $1", user_id
+    )
+    total_clients = row["count"] if row else 0
+
+    # Total invoices
+    row = await conn.fetchrow(
+        "SELECT COUNT(*) as count FROM invoices WHERE user_id = $1", user_id
+    )
+    total_invoices = row["count"] if row else 0
+
+    # Total revenue (paid invoices)
+    row = await conn.fetchrow(
+        "SELECT COALESCE(SUM(total_due), 0) as total FROM invoices WHERE user_id = $1 AND status = 'paid'",
+        user_id
+    )
+    total_revenue = float(row["total"]) if row else 0.0
+
+    # Outstanding amount (sent + overdue)
+    row = await conn.fetchrow(
+        "SELECT COALESCE(SUM(total_due), 0) as total FROM invoices WHERE user_id = $1 AND status IN ('sent', 'overdue')",
+        user_id
+    )
+    outstanding_amount = float(row["total"]) if row else 0.0
+
+    # Overdue count
+    row = await conn.fetchrow(
+        "SELECT COUNT(*) as count FROM invoices WHERE user_id = $1 AND status = 'overdue'",
+        user_id
+    )
+    overdue_count = row["count"] if row else 0
+
+    # Paid this month
+    row = await conn.fetchrow(
+        "SELECT COALESCE(SUM(total_due), 0) as total FROM invoices WHERE user_id = $1 AND status = 'paid' AND updated_at >= date_trunc('month', CURRENT_DATE)",
+        user_id
+    )
+    paid_this_month = float(row["total"]) if row else 0.0
+
+    # Draft count
+    row = await conn.fetchrow(
+        "SELECT COUNT(*) as count FROM invoices WHERE user_id = $1 AND status = 'draft'",
+        user_id
+    )
+    draft_count = row["count"] if row else 0
+
+    # Recent invoices (last 5)
+    rows = await conn.fetch(
+        """SELECT i.id, i.invoice_number, c.name as client_name, i.total_due, i.status, i.created_at
+           FROM invoices i
+           LEFT JOIN clients c ON i.client_id = c.id
+           WHERE i.user_id = $1
+           ORDER BY i.created_at DESC
+           LIMIT 5""",
+        user_id
+    )
+    recent_invoices = []
+    for r in rows:
+        recent_invoices.append({
+            "id": str(r["id"]),
+            "invoice_number": r["invoice_number"],
+            "client_name": r["client_name"],
+            "total_due": float(r["total_due"]),
+            "status": r["status"],
+            "created_at": r["created_at"].isoformat() if hasattr(r["created_at"], "isoformat") else str(r["created_at"]),
+        })
+
+    return {
+        "total_clients": total_clients,
+        "total_invoices": total_invoices,
+        "total_revenue": total_revenue,
+        "outstanding_amount": outstanding_amount,
+        "overdue_count": overdue_count,
+        "paid_this_month": paid_this_month,
+        "draft_count": draft_count,
+        "recent_invoices": recent_invoices,
+    }
 
 
 # ============================================================

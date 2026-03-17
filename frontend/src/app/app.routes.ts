@@ -23,5 +23,5 @@ export const routes: Routes = [
     { path: 'schedules', component: ScheduleListComponent, canActivate: [authGuard] },
     { path: 'schedules/new', component: ScheduleFormComponent, canActivate: [authGuard] },
     { path: 'settings', component: SettingsPageComponent, canActivate: [authGuard] },
-    { path: '', redirectTo: '/login', pathMatch: 'full' }
+    { path: '', redirectTo: '/dashboard', pathMatch: 'full' }
 ];

@@ -1,0 +1,71 @@
+<div class="dashboard-container">
+  <div class="header">
+    <h1>Dashboard</h1>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    Loading dashboard...
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && stats" class="dashboard-content">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card stat-invoices">
+        <span class="stat-value">{{ stats.total_invoices }}</span>
+        <span class="stat-label">Total Invoices</span>
+      </div>
+      <div class="stat-card stat-revenue">
+        <span class="stat-value">{{ formatCurrency(stats.total_revenue) }}</span>
+        <span class="stat-label">Total Revenue</span>
+      </div>
+      <div class="stat-card stat-outstanding">
+        <span class="stat-value">{{ formatCurrency(stats.outstanding_amount) }}</span>
+        <span class="stat-label">Outstanding</span>
+      </div>
+      <div class="stat-card stat-overdue">
+        <span class="stat-value">{{ stats.overdue_count }}</span>
+        <span class="stat-label">Overdue</span>
+      </div>
+    </div>
+
+    <!-- Recent Invoices -->
+    <div class="recent-invoices" *ngIf="stats.recent_invoices.length > 0">
+      <div class="section-header">
+        <h2>Recent Invoices</h2>
+        <a routerLink="/invoices" class="view-all-link">View All</a>
+      </div>
+      <div class="invoices-table">
+        <div class="table-header">
+          <span class="col-number">Invoice</span>
+          <span class="col-client">Client</span>
+          <span class="col-amount">Amount</span>
+          <span class="col-status">Status</span>
+        </div>
+        <div *ngFor="let invoice of stats.recent_invoices" class="table-row" [routerLink]="'/invoices/' + invoice.id">
+          <span class="col-number">{{ invoice.invoice_number }}</span>
+          <span class="col-client">{{ invoice.client_name }}</span>
+          <span class="col-amount">{{ formatCurrency(invoice.total_due) }}</span>
+          <span class="col-status">
+            <span class="status-badge" [ngClass]="'status-' + invoice.status">{{ invoice.status }}</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h2>Quick Actions</h2>
+      <div class="actions-grid">
+        <a routerLink="/invoices/new" class="action-btn action-new-invoice">New Invoice</a>
+        <a routerLink="/clients" class="action-btn action-add-client">Add Client</a>
+        <a routerLink="/settings" class="action-btn action-settings">Settings</a>
+      </div>
+    </div>
+  </div>
+</div>

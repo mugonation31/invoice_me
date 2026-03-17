@@ -6,10 +6,10 @@ describe('App Routes', () => {
     expect(routes.length).toBeGreaterThan(0);
   });
 
-  it('should have a default redirect to /login', () => {
+  it('should have a default redirect to /dashboard', () => {
     const defaultRoute = routes.find(r => r.path === '');
     expect(defaultRoute).toBeTruthy();
-    expect(defaultRoute?.redirectTo).toBe('/login');
+    expect(defaultRoute?.redirectTo).toBe('/dashboard');
   });
 
   it('should have a login route', () => {
