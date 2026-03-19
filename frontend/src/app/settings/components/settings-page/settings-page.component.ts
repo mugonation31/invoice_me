@@ -58,6 +58,22 @@ export class SettingsPageComponent implements OnInit {
     });
   }
 
+  onSortCodeInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    // Strip non-digits
+    let digits = input.value.replace(/\D/g, '');
+    // Limit to 6 digits
+    digits = digits.substring(0, 6);
+    // Format as XX-XX-XX
+    let formatted = '';
+    for (let i = 0; i < digits.length; i++) {
+      if (i === 2 || i === 4) formatted += '-';
+      formatted += digits[i];
+    }
+    this.settingsForm.get('sort_code')?.setValue(formatted, { emitEvent: false });
+    input.value = formatted;
+  }
+
   onSave() {
     this.successMessage = '';
     this.errorMessage = '';

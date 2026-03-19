@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, filter, take, switchMap } from 'rxjs';
 
 @Injectable({
     providedIn: 'root'
@@ -11,6 +11,10 @@ export class SupabaseService {
 
     private currentUserSubject: BehaviorSubject<User | null>;
     public currentUser$: Observable<User | null>;
+
+    // Tracks whether the initial session load is complete
+    private sessionLoadedSubject = new BehaviorSubject<boolean>(false);
+    public sessionLoaded$ = this.sessionLoadedSubject.asObservable();
 
     constructor() {
         this.supabase = createClient(
@@ -30,10 +34,24 @@ export class SupabaseService {
             this.currentUserSubject.next(data.session.user);
         }
 
+        // Mark session as loaded
+        this.sessionLoadedSubject.next(true);
+
         this.supabase.auth.onAuthStateChange((event, session) => {
             console.log('Auth state change:', event);
             this.currentUserSubject.next(session?.user ?? null);
         });
+    }
+
+    /**
+     * Returns an observable that waits for session to load, then emits the current user
+     */
+    currentUserAfterLoad$(): Observable<User | null> {
+        return this.sessionLoaded$.pipe(
+            filter(loaded => loaded),
+            take(1),
+            switchMap(() => this.currentUser$.pipe(take(1)))
+        );
     }
 
     async signUp(email: string, password: string, name: string) {

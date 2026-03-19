@@ -2,8 +2,18 @@
 Database operations using async PostgreSQL
 """
 import asyncpg
+from uuid import UUID
 from typing import List, Optional, Dict, Any
 from config import settings
+
+
+def _serialize_row(row) -> Dict[str, Any]:
+    """Convert a database row to a dict with UUIDs cast to strings"""
+    d = dict(row)
+    for k, v in d.items():
+        if isinstance(v, UUID):
+            d[k] = str(v)
+    return d
 
 
 # Global connection pool
@@ -37,7 +47,7 @@ async def get_clients(user_id: str) -> List[Dict[str, Any]]:
         "SELECT * FROM clients WHERE user_id = $1 ORDER BY name ASC",
         user_id
     )
-    return [dict(row) for row in rows]
+    return [_serialize_row(row) for row in rows]
 
 
 async def get_client_by_id(client_id: str, user_id: str) -> Optional[Dict[str, Any]]:
@@ -47,7 +57,7 @@ async def get_client_by_id(client_id: str, user_id: str) -> Optional[Dict[str, A
         "SELECT * FROM clients WHERE id = $1 AND user_id = $2",
         client_id, user_id
     )
-    return dict(row) if row else None
+    return _serialize_row(row) if row else None
 
 
 async def create_client(user_id: str, client) -> Dict[str, Any]:
@@ -59,7 +69,7 @@ async def create_client(user_id: str, client) -> Dict[str, Any]:
            RETURNING *""",
         user_id, client.name, client.email, client.phone, client.address
     )
-    return dict(row)
+    return _serialize_row(row)
 
 
 async def update_client(client_id: str, user_id: str, updates) -> Optional[Dict[str, Any]]:
@@ -90,7 +100,7 @@ async def update_client(client_id: str, user_id: str, updates) -> Optional[Dict[
 
     db = await get_pool()
     row = await db.fetchrow(query, *values)
-    return dict(row) if row else None
+    return _serialize_row(row) if row else None
 
 
 async def delete_client(client_id: str, user_id: str) -> bool:
@@ -132,7 +142,7 @@ async def get_invoices(user_id: str) -> List[Dict[str, Any]]:
     )
     result = []
     for row in rows:
-        invoice = dict(row)
+        invoice = _serialize_row(row)
         invoice["line_items"] = []
         result.append(invoice)
     return result
@@ -152,16 +162,16 @@ async def get_invoice_by_id(invoice_id: str, user_id: str) -> Optional[Dict[str,
     if not row:
         return None
 
-    invoice = dict(row)
+    invoice = _serialize_row(row)
 
     # Fetch line items
     line_rows = await db.fetch(
-        """SELECT * FROM line_items
+        """SELECT * FROM invoice_line_items
            WHERE invoice_id = $1
            ORDER BY sort_order ASC""",
         invoice_id
     )
-    invoice["line_items"] = [dict(lr) for lr in line_rows]
+    invoice["line_items"] = [_serialize_row(lr) for lr in line_rows]
     return invoice
 
 
@@ -173,8 +183,10 @@ async def create_invoice(user_id: str, invoice) -> Dict[str, Any]:
     invoice_number = await get_next_invoice_number(user_id)
 
     # Calculate subtotal from line items
-    subtotal = sum(item.quantity * item.rate for item in invoice.line_items)
-    tax_amount = subtotal * invoice.tax_rate / 100
+    from decimal import Decimal
+    subtotal = sum(Decimal(str(item.quantity)) * Decimal(str(item.rate)) for item in invoice.line_items)
+    tax_rate = Decimal(str(invoice.tax_rate))
+    tax_amount = subtotal * tax_rate / Decimal("100")
     total_due = subtotal + tax_amount
 
     # Insert invoice record
@@ -188,7 +200,7 @@ async def create_invoice(user_id: str, invoice) -> Dict[str, Any]:
         invoice.issue_date, invoice.due_date, invoice.tax_rate,
         subtotal, tax_amount, total_due, invoice.notes
     )
-    invoice_dict = dict(row)
+    invoice_dict = _serialize_row(row)
     invoice_id = invoice_dict["id"]
 
     # Insert all line items
@@ -196,13 +208,13 @@ async def create_invoice(user_id: str, invoice) -> Dict[str, Any]:
     for idx, item in enumerate(invoice.line_items):
         amount = item.quantity * item.rate
         li_row = await db.fetchrow(
-            """INSERT INTO line_items (
+            """INSERT INTO invoice_line_items (
                    invoice_id, description, quantity, rate, amount, sort_order
                ) VALUES ($1, $2, $3, $4, $5, $6)
                RETURNING *""",
             invoice_id, item.description, item.quantity, item.rate, amount, idx
         )
-        line_items.append(dict(li_row))
+        line_items.append(_serialize_row(li_row))
 
     invoice_dict["line_items"] = line_items
 
@@ -234,13 +246,13 @@ async def update_invoice(invoice_id: str, user_id: str, updates) -> Optional[Dic
     if line_items_data is not None:
         # Delete existing line items and re-insert
         await db.execute(
-            "DELETE FROM line_items WHERE invoice_id = $1",
+            "DELETE FROM invoice_line_items WHERE invoice_id = $1",
             invoice_id
         )
         for idx, item in enumerate(line_items_data):
             amount = item["quantity"] * item["rate"]
             await db.fetchrow(
-                """INSERT INTO line_items (
+                """INSERT INTO invoice_line_items (
                        invoice_id, description, quantity, rate, amount, sort_order
                    ) VALUES ($1, $2, $3, $4, $5, $6)
                    RETURNING *""",
@@ -251,7 +263,7 @@ async def update_invoice(invoice_id: str, user_id: str, updates) -> Optional[Dic
     if needs_recalc:
         # Recalculate from line items in DB
         li_rows = await db.fetch(
-            "SELECT quantity, rate FROM line_items WHERE invoice_id = $1",
+            "SELECT quantity, rate FROM invoice_line_items WHERE invoice_id = $1",
             invoice_id
         )
         subtotal = sum(r["quantity"] * r["rate"] for r in li_rows)
@@ -266,7 +278,10 @@ async def update_invoice(invoice_id: str, user_id: str, updates) -> Optional[Dic
             )
             tax_rate = current["tax_rate"] if current else 0
 
-        tax_amount = subtotal * tax_rate / 100
+        from decimal import Decimal
+        tax_rate = Decimal(str(tax_rate))
+        subtotal = Decimal(str(subtotal))
+        tax_amount = subtotal * tax_rate / Decimal("100")
         total_due = subtotal + tax_amount
 
         update_data["subtotal"] = subtotal
@@ -318,7 +333,7 @@ async def delete_invoice(invoice_id: str, user_id: str) -> bool:
     db = await get_pool()
     # Delete line items first
     await db.execute(
-        "DELETE FROM line_items WHERE invoice_id = $1",
+        "DELETE FROM invoice_line_items WHERE invoice_id = $1",
         invoice_id
     )
     result = await db.execute(
@@ -354,7 +369,7 @@ async def get_company_settings(user_id: str) -> Optional[Dict[str, Any]]:
         "SELECT * FROM company_settings WHERE user_id = $1",
         user_id
     )
-    return dict(row) if row else None
+    return _serialize_row(row) if row else None
 
 
 async def upsert_company_settings(user_id: str, settings_data) -> Dict[str, Any]:
@@ -388,7 +403,7 @@ async def upsert_company_settings(user_id: str, settings_data) -> Dict[str, Any]
         update_data.get("sort_code"),
         update_data.get("iban"),
     )
-    return dict(row)
+    return _serialize_row(row)
 
 
 # ============================================================
@@ -494,7 +509,7 @@ async def get_schedules(user_id: str) -> List[Dict[str, Any]]:
            ORDER BY s.next_run_date ASC""",
         user_id
     )
-    return [dict(row) for row in rows]
+    return [_serialize_row(row) for row in rows]
 
 
 async def get_schedule_by_id(schedule_id: str, user_id: str) -> Optional[Dict[str, Any]]:
@@ -507,7 +522,7 @@ async def get_schedule_by_id(schedule_id: str, user_id: str) -> Optional[Dict[st
            WHERE s.id = $1 AND s.user_id = $2""",
         schedule_id, user_id
     )
-    return dict(row) if row else None
+    return _serialize_row(row) if row else None
 
 
 async def create_schedule(user_id: str, schedule) -> Dict[str, Any]:
@@ -531,7 +546,7 @@ async def create_schedule(user_id: str, schedule) -> Dict[str, Any]:
         line_items_json, schedule.tax_rate,
         schedule.recurrence.value, schedule.next_run_date, schedule.auto_send
     )
-    schedule_dict = dict(row)
+    schedule_dict = _serialize_row(row)
 
     # Fetch client name
     client_row = await db.fetchrow(
@@ -612,7 +627,7 @@ async def get_due_schedules() -> List[Dict[str, Any]]:
            WHERE s.active = true AND s.next_run_date <= CURRENT_DATE
            ORDER BY s.next_run_date ASC"""
     )
-    return [dict(row) for row in rows]
+    return [_serialize_row(row) for row in rows]
 
 
 async def advance_schedule_date(schedule_id: str, recurrence: str) -> None:

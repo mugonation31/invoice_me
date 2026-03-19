@@ -114,6 +114,43 @@
         <h3>Notes</h3>
         <p>{{ invoice.notes }}</p>
       </div>
+
+      <!-- Payment Details -->
+      <div *ngIf="settings" class="payment-details-section">
+        <h3>Payment Details</h3>
+        <div class="payment-info">
+          <div *ngIf="settings.bank_account_name" class="payment-row">
+            <span class="payment-label">Bank Account Name:</span>
+            <span class="payment-value">{{ settings.bank_account_name }}</span>
+          </div>
+          <div *ngIf="settings.bank_name" class="payment-row">
+            <span class="payment-label">Bank Name:</span>
+            <span class="payment-value">{{ settings.bank_name }}</span>
+          </div>
+          <div *ngIf="settings.account_number" class="payment-row">
+            <span class="payment-label">Account Number:</span>
+            <span class="payment-value">{{ settings.account_number }}</span>
+          </div>
+          <div *ngIf="settings.sort_code" class="payment-row">
+            <span class="payment-label">Sort Code:</span>
+            <span class="payment-value">{{ settings.sort_code }}</span>
+          </div>
+          <div *ngIf="settings.iban" class="payment-row">
+            <span class="payment-label">IBAN:</span>
+            <span class="payment-value">{{ settings.iban }}</span>
+          </div>
+          <div class="payment-row">
+            <span class="payment-label">Reference:</span>
+            <span class="payment-value">{{ invoice.invoice_number }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="invoice-footer">
+        <p class="thank-you">Thank you for your business!</p>
+        <p class="retain-copy">Please retain a copy of this invoice for your records.</p>
+      </div>
     </div>
   </div>
 </div>

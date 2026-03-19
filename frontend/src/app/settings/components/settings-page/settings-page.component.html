@@ -95,6 +95,8 @@
           formControlName="sort_code"
           class="form-input"
           placeholder="20-30-40"
+          maxlength="8"
+          (input)="onSortCodeInput($event)"
         />
       </div>
 

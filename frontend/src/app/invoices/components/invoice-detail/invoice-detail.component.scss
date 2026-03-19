@@ -337,6 +337,69 @@
   }
 }
 
+// Payment Details
+.payment-details-section {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-left: 4px solid #2d3748;
+  background: #f7fafc;
+  border-radius: 0 8px 8px 0;
+
+  h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #2d3748;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.payment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.payment-row {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+
+  .payment-label {
+    font-family: monospace;
+    color: #718096;
+    font-weight: 500;
+  }
+
+  .payment-value {
+    font-family: monospace;
+    color: #2d3748;
+    font-weight: 500;
+  }
+}
+
+// Footer
+.invoice-footer {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+
+  .thank-you {
+    margin: 0 0 0.5rem 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #2d3748;
+  }
+
+  .retain-copy {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: #a0aec0;
+  }
+}
+
 // Responsive
 @media (max-width: 768px) {
   .action-bar {

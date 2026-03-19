@@ -26,7 +26,14 @@ export class SignupComponent {
   constructor(
     private supabaseService: SupabaseService,
     private router: Router
-  ) {}
+  ) {
+    // If already logged in, redirect to dashboard
+    this.supabaseService.currentUserAfterLoad$().subscribe(user => {
+      if (user) {
+        this.router.navigate(['/dashboard']);
+      }
+    });
+  }
 
   /**
    * Validates the signup form
