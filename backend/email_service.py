@@ -2,6 +2,7 @@
 Email sending service using SendGrid
 """
 import base64
+import html as html_mod
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import (
     Mail, Attachment, FileContent, FileName, FileType, Disposition
@@ -22,15 +23,19 @@ async def send_invoice_email(
     sender = from_email or settings.sendgrid_from_email
     company = company_name or "Our Company"
 
+    safe_client = html_mod.escape(client_name)
+    safe_invoice = html_mod.escape(invoice_number)
+    safe_company = html_mod.escape(company)
+
     message = Mail(
         from_email=sender,
         to_emails=to_email,
-        subject=f"Invoice {invoice_number} from {company}",
+        subject=f"Invoice {safe_invoice} from {safe_company}",
         html_content=f"""
-        <p>Dear {client_name},</p>
-        <p>Please find attached invoice {invoice_number} for &pound;{total_due:.2f}.</p>
+        <p>Dear {safe_client},</p>
+        <p>Please find attached invoice {safe_invoice} for &pound;{total_due:.2f}.</p>
         <p>Thank you for your business.</p>
-        <p>{company}</p>
+        <p>{safe_company}</p>
         """,
     )
 

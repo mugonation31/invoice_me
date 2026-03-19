@@ -3,7 +3,7 @@ fastapi==0.109.0
 uvicorn[standard]==0.27.0
 
 # JWT token verification
-python-jose[cryptography]==3.3.0
+PyJWT[crypto]==2.8.0
 python-multipart==0.0.6
 
 # Database (async PostgreSQL)
@@ -14,9 +14,6 @@ python-dotenv==1.0.0
 
 # HTTP client (for Supabase API calls if needed)
 httpx==0.26.0
-
-# CORS
-fastapi-cors==0.0.6
 
 # Pydantic for data validation (comes with FastAPI but explicit version)
 pydantic==2.5.3

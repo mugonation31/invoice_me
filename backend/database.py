@@ -2,6 +2,7 @@
 Database operations using async PostgreSQL
 """
 import asyncpg
+import ssl
 from uuid import UUID
 from typing import List, Optional, Dict, Any
 from config import settings
@@ -24,7 +25,13 @@ async def get_pool() -> asyncpg.Pool:
     """Get or create database connection pool"""
     global pool
     if pool is None:
-        pool = await asyncpg.create_pool(settings.database_url)
+        # Supabase requires SSL connections; their pooler uses a certificate
+        # chain that doesn't pass strict verification, so we encrypt without
+        # verifying the cert (equivalent to sslmode=require)
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        pool = await asyncpg.create_pool(settings.database_url, ssl=ssl_context)
     return pool
 
 

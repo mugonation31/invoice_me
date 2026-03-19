@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     database_url: str
 
     # CORS settings
-    cors_origins: str = "http://localhost:4200"
+    cors_origins: str = "http://localhost:4200,http://localhost:4201"
 
     # Environment
     environment: str = "development"

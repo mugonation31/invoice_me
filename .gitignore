@@ -53,3 +53,6 @@ htmlcov/
 # Build artifacts
 build/
 *.egg-info/
+
+playwright-report/
+test-results/

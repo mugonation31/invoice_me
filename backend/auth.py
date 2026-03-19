@@ -55,10 +55,10 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
 
         return payload
 
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid authentication credentials: {str(e)}",
+            detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
