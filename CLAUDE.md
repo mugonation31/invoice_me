@@ -7,7 +7,7 @@ Full-stack invoice management SaaS built with FastAPI + Angular + Supabase.
 - **Backend:** Python 3.11, FastAPI 0.109, asyncpg, Pydantic 2.5
 - **Frontend:** Angular 17.3 (standalone components), TypeScript 5.4, SCSS
 - **Database:** PostgreSQL via Supabase (RLS enabled on all tables)
-- **Services:** ReportLab (PDF), SendGrid (email), APScheduler (scheduling)
+- **Services:** ReportLab (PDF), Resend (email), APScheduler (scheduling)
 - **Auth:** Supabase Auth with ES256 JWT verification
 - **Infra:** Docker Compose, Nginx
 
@@ -51,7 +51,7 @@ backend/
 ├── models.py          # Request/response Pydantic models
 ├── database.py        # All async DB operations
 ├── scheduler.py       # APScheduler job definitions
-├── email_service.py   # SendGrid integration
+├── email_service.py   # Resend integration
 ├── pdf_generator.py   # ReportLab PDF creation
 ├── conftest.py        # Test fixtures
 └── tests/             # 14 test files
@@ -88,7 +88,7 @@ All prefixed with `/api/` except `/health`:
 
 ## Database
 
-5 tables with RLS: `clients`, `company_settings`, `invoices`, `invoice_items`, `schedules`. All user data scoped by `user_id` with row-level security policies. Auto-updating `updated_at` triggers on all tables.
+5 tables with RLS: `clients`, `company_settings`, `invoices`, `invoice_line_items`, `invoice_schedules`. All user data scoped by `user_id` with row-level security policies. Auto-updating `updated_at` triggers on all tables.
 
 ## Environment Variables
 
@@ -96,5 +96,5 @@ Backend requires (see `backend/.env.example`):
 - `SUPABASE_URL`, `SUPABASE_JWT_SECRET` — auth
 - `DATABASE_URL` — PostgreSQL connection string
 - `CORS_ORIGINS` — allowed origins (comma-separated)
-- `SENDGRID_API_KEY`, `SENDGRID_FROM_EMAIL` — email
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL` — email
 - `ENVIRONMENT` — `development` or `production`

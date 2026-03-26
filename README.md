@@ -22,7 +22,7 @@ A full-stack invoice management application for freelancers and small businesses
 | Database   | PostgreSQL via Supabase (Row Level Security enabled)  |
 | Auth       | Supabase Auth (ES256 JWT, JWKS verification)          |
 | PDF        | ReportLab                                             |
-| Email      | SendGrid                                              |
+| Email      | Resend                                                |
 | Scheduling | APScheduler                                           |
 | Infra      | Docker Compose, Nginx                                 |
 
@@ -30,7 +30,7 @@ A full-stack invoice management application for freelancers and small businesses
 
 - [Docker](https://docs.docker.com/get-docker/) and Docker Compose
 - A [Supabase](https://supabase.com) project (free tier works)
-- A [SendGrid](https://sendgrid.com) API key with a verified sender
+- A [Resend](https://resend.com) API key with a verified domain
 - (Optional) Node.js 20+ and Python 3.11+ for local development without Docker
 
 ## Getting Started
@@ -62,8 +62,8 @@ Fill in `backend/.env`:
 | `SUPABASE_JWT_SECRET` | JWT secret from Supabase API settings        |
 | `DATABASE_URL`        | PostgreSQL connection string from Supabase   |
 | `CORS_ORIGINS`        | Comma-separated allowed origins              |
-| `SENDGRID_API_KEY`    | SendGrid API key                             |
-| `SENDGRID_FROM_EMAIL` | Verified sender email address                |
+| `RESEND_API_KEY`      | Resend API key                               |
+| `RESEND_FROM_EMAIL`   | Verified sender email (on your domain)       |
 | `ENVIRONMENT`         | `development` or `production`                |
 
 ### 4. Start the application
@@ -145,7 +145,7 @@ invoice_me/
 │   ├── config.py            # Environment configuration (Pydantic Settings)
 │   ├── database.py          # Async PostgreSQL operations (asyncpg)
 │   ├── models.py            # Request/response schemas (Pydantic)
-│   ├── email_service.py     # SendGrid email with PDF attachment
+│   ├── email_service.py     # Resend email with PDF attachment
 │   ├── pdf_generator.py     # Invoice PDF creation (ReportLab)
 │   ├── scheduler.py         # APScheduler recurring invoice jobs
 │   └── tests/               # 14 unit test modules
@@ -195,8 +195,8 @@ Five tables with Row Level Security ensuring users can only access their own dat
 | `clients`          | Client contact details                     |
 | `company_settings` | Business info and bank details (one per user) |
 | `invoices`         | Invoice headers (status, dates, totals)    |
-| `invoice_items`    | Line items linked to invoices              |
-| `schedules`        | Recurring invoice schedule definitions     |
+| `invoice_line_items` | Line items linked to invoices            |
+| `invoice_schedules`  | Recurring invoice schedule definitions   |
 
 All tables include `created_at` and `updated_at` timestamps with automatic update triggers.
 
