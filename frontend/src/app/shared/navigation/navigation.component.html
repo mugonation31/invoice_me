@@ -1,29 +1,37 @@
 <!-- Only show navigation if user is logged in -->
 <nav *ngIf="currentUser" class="navbar">
   <div class="nav-container">
-    <!-- Left side: App branding -->
-    <div class="nav-brand">
-      <h2>Invoice Me</h2>
+    <!-- Left side: App branding + greeting -->
+    <div class="nav-left">
+      <div class="nav-brand">
+        <h2>Invoice Me</h2>
+      </div>
+      <span class="user-greeting">Hi, {{ userName }}!</span>
     </div>
 
-    <!-- Center: Navigation links -->
-    <div class="nav-links">
-      <a routerLink="/dashboard">Dashboard</a>
-      <a routerLink="/clients">Clients</a>
-      <a routerLink="/invoices">Invoices</a>
-      <a routerLink="/schedules">Schedules</a>
-      <a routerLink="/settings">Settings</a>
-    </div>
+    <!-- Hamburger button (mobile only) -->
+    <button class="hamburger" [class.active]="menuOpen" (click)="toggleMenu()" aria-label="Toggle menu">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
 
-    <!-- Right side: User info and logout -->
-    <div class="nav-user">
-      <!-- User greeting -->
-      <span class="user-name">Hi, {{ userName }}!</span>
+    <!-- Navigation links + user section -->
+    <div class="nav-menu" [class.open]="menuOpen">
+      <div class="nav-links">
+        <a routerLink="/dashboard" (click)="closeMenu()">Dashboard</a>
+        <a routerLink="/clients" (click)="closeMenu()">Clients</a>
+        <a routerLink="/invoices" (click)="closeMenu()">Invoices</a>
+        <a routerLink="/schedules" (click)="closeMenu()">Schedules</a>
+        <a routerLink="/settings" (click)="closeMenu()">Settings</a>
+      </div>
 
-      <!-- Logout button -->
-      <button (click)="logout()" class="logout-btn">
-        Logout
-      </button>
+      <!-- Logout -->
+      <div class="nav-user">
+        <button (click)="logout(); closeMenu()" class="logout-btn">
+          Logout
+        </button>
+      </div>
     </div>
   </div>
 </nav>

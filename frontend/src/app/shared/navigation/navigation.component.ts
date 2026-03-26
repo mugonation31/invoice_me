@@ -18,6 +18,15 @@ export class NavigationComponent implements OnInit {
   // Store current user info
   currentUser: User | null = null;
   userName: string = '';
+  menuOpen = false;
+
+  toggleMenu() {
+    this.menuOpen = !this.menuOpen;
+  }
+
+  closeMenu() {
+    this.menuOpen = false;
+  }
 
   ngOnInit() {
     // Subscribe to user changes (login/logout events)

@@ -19,17 +19,84 @@
   font-weight: 500;
 }
 
-.error-message {
-  max-width: 800px;
-  margin: 0 auto 1.5rem auto;
-  padding: 1rem 1.25rem;
-  background: #fff5f5;
-  border-left: 4px solid #f56565;
-  border-radius: 8px;
-  color: #c53030;
+// Toast notifications
+.toast {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
   font-size: 0.9375rem;
   font-weight: 500;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  animation: slideIn 0.3s ease-out;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  max-width: 420px;
+
+  .toast-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .toast-text {
+    flex: 1;
+    line-height: 1.4;
+  }
+
+  .toast-dismiss {
+    font-size: 1.25rem;
+    opacity: 0.6;
+    flex-shrink: 0;
+    line-height: 1;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+.toast-success {
+  background: #f0fff4;
+  border: 1px solid #c6f6d5;
+  color: #22543d;
+
+  .toast-icon {
+    background: #48bb78;
+    color: white;
+  }
+}
+
+.toast-error {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  color: #742a2a;
+
+  .toast-icon {
+    background: #f56565;
+    color: white;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .invoice-wrapper {
@@ -363,19 +430,31 @@
 
 .payment-row {
   display: flex;
-  gap: 0.5rem;
-  font-size: 0.9375rem;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid #edf2f7;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
 
   .payment-label {
     font-family: monospace;
-    color: #718096;
+    font-size: 0.6875rem;
     font-weight: 500;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
 
   .payment-value {
     font-family: monospace;
+    font-size: 0.9375rem;
+    font-weight: 600;
     color: #2d3748;
-    font-weight: 500;
+    word-break: break-all;
   }
 }
 

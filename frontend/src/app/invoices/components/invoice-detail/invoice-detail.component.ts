@@ -115,6 +115,7 @@ export class InvoiceDetailComponent implements OnInit {
         }
         this.successMessage = result.message;
         this.sendingEmail = false;
+        setTimeout(() => this.successMessage = null, 5000);
       },
       error: (err) => {
         this.error = 'Failed to send invoice.';

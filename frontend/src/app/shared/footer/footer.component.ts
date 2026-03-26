@@ -43,6 +43,25 @@ import { CommonModule } from '@angular/common';
       font-size: 0.8125rem;
       color: #a0aec0;
     }
+
+    @media (max-width: 480px) {
+      .app-footer {
+        padding: 1rem 1rem;
+      }
+
+      .footer-divider {
+        display: none;
+      }
+
+      .footer-content {
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .footer-copy {
+        font-size: 0.75rem;
+      }
+    }
   `]
 })
 export class FooterComponent {

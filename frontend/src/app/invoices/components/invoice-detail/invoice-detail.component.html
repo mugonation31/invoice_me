@@ -4,14 +4,17 @@
     Loading invoice...
   </div>
 
-  <!-- Error Message -->
-  <div *ngIf="error" class="error-message">
-    {{ error }}
+  <!-- Toast Notifications -->
+  <div *ngIf="error" class="toast toast-error" (click)="error = null">
+    <span class="toast-icon">&#10006;</span>
+    <span class="toast-text">{{ error }}</span>
+    <span class="toast-dismiss">&times;</span>
   </div>
 
-  <!-- Success Message -->
-  <div *ngIf="successMessage" class="success-message">
-    {{ successMessage }}
+  <div *ngIf="successMessage" class="toast toast-success" (click)="successMessage = null">
+    <span class="toast-icon">&#10003;</span>
+    <span class="toast-text">{{ successMessage }}</span>
+    <span class="toast-dismiss">&times;</span>
   </div>
 
   <!-- Invoice Content -->

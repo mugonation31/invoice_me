@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     # Environment
     environment: str = "development"
 
-    # SendGrid settings
-    sendgrid_api_key: str
-    sendgrid_from_email: str
+    # Resend settings
+    resend_api_key: str
+    resend_from_email: str
 
     class Config:
         env_file = ".env"
